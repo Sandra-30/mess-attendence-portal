@@ -38,13 +38,7 @@ class Attendance(Base):
 
     student = relationship("User", back_populates="attendances")
 
-class Menu(Base):
-    __tablename__ = "menus"
 
-    id = Column(Integer, primary_key=True, index=True)
-    month = Column(Integer, index=True)
-    year = Column(Integer, index=True)
-    image_url = Column(String)
 
 class Ledger(Base):
     __tablename__ = "ledger"

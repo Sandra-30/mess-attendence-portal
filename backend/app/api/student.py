@@ -8,20 +8,7 @@ import datetime
 
 router = APIRouter()
 
-@router.get("/menu/{year}/{month}")
-def get_menu(
-    year: int,
-    month: int,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(deps.get_current_active_user)
-):
-    menu = db.query(models.Menu).filter(
-        models.Menu.year == year,
-        models.Menu.month == month
-    ).first()
-    if not menu:
-        return {"year": year, "month": month, "image_url": None}
-    return {"year": year, "month": month, "image_url": menu.image_url}
+
 
 @router.get("/attendance/month/{year}/{month}", response_model=list[schemas.AttendanceResponse])
 def get_monthly_attendance(
