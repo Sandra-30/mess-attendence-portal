@@ -277,8 +277,10 @@ export default function StudentDashboard() {
             <div style={{ textAlign: 'center', padding: '3rem' }}>Loading calendar...</div>
           ) : (
             <>
-              <div className="calendar-grid">
-                {renderCalendar()}
+              <div className="calendar-wrapper">
+                <div className="calendar-grid">
+                  {renderCalendar()}
+                </div>
               </div>
               
               {/* Inline Edit Panel */}

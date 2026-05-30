@@ -138,6 +138,12 @@ p {
   padding: 2rem;
 }
 
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+}
+
 .flex-center {
   display: flex;
   align-items: center;
@@ -160,11 +166,18 @@ p {
 }
 
 /* Calendar Grid */
+.calendar-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 0.5rem;
   margin-top: 1rem;
+  min-width: 600px; /* Forces scrolling on mobile */
 }
 
 .calendar-header {
@@ -264,4 +277,23 @@ p {
   background: var(--primary-color);
   opacity: 1;
   box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+  .glass-panel {
+    padding: 1.25rem !important;
+  }
+  
+  .auth-card {
+    padding: 1.5rem;
+  }
+  
+  h1 {
+    font-size: 1.75rem !important;
+  }
+  
+  h2 {
+    font-size: 1.5rem !important;
+  }
 }
