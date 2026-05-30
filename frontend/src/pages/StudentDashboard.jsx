@@ -16,10 +16,21 @@ export default function StudentDashboard() {
   const [showPasswordTab, setShowPasswordTab] = useState(false);
   
   const [selectedEditDate, setSelectedEditDate] = useState(null);
+  const [studentName, setStudentName] = useState('');
   
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Extract name from JWT token
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload.name) {
+          setStudentName(payload.name);
+        }
+      } catch (err) {}
+    }
     fetchDashboardData();
   }, [currentMonth]);
 
@@ -195,7 +206,7 @@ export default function StudentDashboard() {
   return (
     <div className="container" style={{ paddingBottom: '4rem' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h2>Student Dashboard</h2>
+        <h2>{studentName ? `Welcome, ${studentName.split(' ')[0]}` : 'Student Dashboard'}</h2>
         <div style={{ display: 'flex', gap: '1rem' }}>
           <button onClick={() => setShowPasswordTab(!showPasswordTab)} className="btn" style={{ background: 'transparent', color: 'var(--text-secondary)' }}>
             <Key size={20} style={{ marginRight: '8px' }} /> Change Password
@@ -277,10 +288,8 @@ export default function StudentDashboard() {
             <div style={{ textAlign: 'center', padding: '3rem' }}>Loading calendar...</div>
           ) : (
             <>
-              <div className="calendar-wrapper">
-                <div className="calendar-grid">
-                  {renderCalendar()}
-                </div>
+              <div className="calendar-grid">
+                {renderCalendar()}
               </div>
               
               {/* Inline Edit Panel */}

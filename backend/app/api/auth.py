@@ -50,5 +50,5 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     if not user.is_active:
          raise HTTPException(status_code=400, detail="Inactive user")
          
-    access_token = security.create_access_token(data={"sub": user.email, "role": user.role})
+    access_token = security.create_access_token(data={"sub": user.email, "role": user.role, "name": user.name})
     return {"access_token": access_token, "token_type": "bearer"}
