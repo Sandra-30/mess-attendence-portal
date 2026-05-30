@@ -19,7 +19,13 @@ const sortRooms = (a, b) => {
   if (roomA.prefix !== roomB.prefix) {
     return roomA.prefix.localeCompare(roomB.prefix);
   }
-  return roomA.num - roomB.num;
+  if (roomA.num !== roomB.num) {
+    return roomA.num - roomB.num;
+  }
+  
+  const nameA = a.name || '';
+  const nameB = b.name || '';
+  return nameA.localeCompare(nameB);
 };
 
 export default function WardenDashboard() {
