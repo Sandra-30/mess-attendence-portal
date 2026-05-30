@@ -97,7 +97,7 @@ export default function WardenDashboard() {
         </div>
       )}
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '2rem' }}>
+      <div className="tabs-container" style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
         {['whitelist', 'headcounts', 'billing'].map(tab => (
           <button
             key={tab}
@@ -186,7 +186,7 @@ export default function WardenDashboard() {
             </div>
 
             {headcounts && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem', marginTop: '2rem' }}>
+              <div className="headcount-container" style={{ display: 'flex', gap: '2rem', marginTop: '2rem' }}>
                 <div className="glass-card" style={{ padding: '2rem', flex: 1, textAlign: 'center' }}>
                   <h4 style={{ color: 'var(--text-secondary)' }}>Breakfast</h4>
                   <div style={{ fontSize: '3rem', fontWeight: 'bold' }}>{headcounts.breakfast}</div>
@@ -208,7 +208,7 @@ export default function WardenDashboard() {
         {activeTab === 'billing' && billingMatrix && (
           <div>
             <h3>Billing Data</h3>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1rem', marginBottom: '2rem' }}>
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', marginBottom: '2rem' }}>
               <div className="input-group" style={{ margin: 0 }}>
                 <label className="input-label">Month</label>
                 <input type="number" min="1" max="12" className="glass-input" style={{ width: '100px' }} value={billingMonth} onChange={e => setBillingMonth(e.target.value)} />
@@ -219,7 +219,7 @@ export default function WardenDashboard() {
               </div>
             </div>
 
-            <div className="glass-card" style={{ padding: '1.5rem', marginBottom: '2rem', display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="glass-card" style={{ padding: '1.5rem', marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <div style={{ color: 'var(--text-secondary)' }}>Total Hostel Days Accumulated</div>
                 <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>{billingMatrix.total_hostel_days} days</div>
