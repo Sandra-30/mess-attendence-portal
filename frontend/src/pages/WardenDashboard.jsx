@@ -3,6 +3,25 @@ import { useNavigate } from 'react-router-dom';
 import { LogOut, Upload, Users, Image as ImageIcon, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import api from '../api';
 
+const sortRooms = (a, b) => {
+  const parseRoom = (room) => {
+    if (!room) return { prefix: '', num: 0 };
+    const match = room.match(/^([A-Za-z]+)(\d*)$/);
+    if (match) {
+      return { prefix: match[1].toUpperCase(), num: parseInt(match[2] || '0', 10) };
+    }
+    return { prefix: room.toUpperCase(), num: 0 };
+  };
+
+  const roomA = parseRoom(a.room_number);
+  const roomB = parseRoom(b.room_number);
+
+  if (roomA.prefix !== roomB.prefix) {
+    return roomA.prefix.localeCompare(roomB.prefix);
+  }
+  return roomA.num - roomB.num;
+};
+
 export default function WardenDashboard() {
   const [activeTab, setActiveTab] = useState('whitelist');
   const [whitelistForm, setWhitelistForm] = useState({ name: '', email: '', room_number: '' });
@@ -57,7 +76,11 @@ export default function WardenDashboard() {
   const fetchBillingMatrix = async () => {
     try {
       const res = await api.get(`/warden/billing-matrix?month=${billingMonth}&year=${billingYear}`);
-      setBillingMatrix(res.data);
+      const data = res.data;
+      if (data && data.student_matrix) {
+        data.student_matrix.sort(sortRooms);
+      }
+      setBillingMatrix(data);
     } catch (err) {
       setMessage({ type: 'error', text: 'Failed to fetch billing matrix.' });
     }
@@ -66,7 +89,9 @@ export default function WardenDashboard() {
   const fetchWhitelist = async () => {
     try {
       const res = await api.get('/warden/whitelist');
-      setWhitelistEntries(res.data);
+      const data = res.data;
+      data.sort(sortRooms);
+      setWhitelistEntries(data);
     } catch (err) {
       setMessage({ type: 'error', text: 'Failed to fetch list.' });
     }
