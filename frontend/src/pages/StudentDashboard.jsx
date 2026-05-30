@@ -337,7 +337,7 @@ export default function StudentDashboard() {
           {/* Fines Card */}
           <div className="glass-panel" style={{ padding: '2rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h3>Ledger Fines</h3>
+              <h3>Pending Fines</h3>
               <span style={{ background: 'var(--danger-color)', color: 'white', padding: '4px 12px', borderRadius: '20px', fontWeight: 'bold' }}>
                 ₹{totalFines}
               </span>

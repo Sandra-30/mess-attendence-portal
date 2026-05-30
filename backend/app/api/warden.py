@@ -54,7 +54,51 @@ def get_whitelist(
 ):
     return db.query(models.Whitelist).order_by(models.Whitelist.id.desc()).all()
 
+@router.post("/menu/upload")
+async def upload_menu(
+    file: UploadFile = File(...),
+    month: int = None,
+    year: int = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(deps.get_current_warden)
+):
+    if not month or not year:
+        today = datetime.date.today()
+        month = today.month
+        year = today.year
 
+    # Upload to Supabase Storage
+    try:
+        supabase = get_supabase()
+        
+        try:
+            supabase.storage.get_bucket('menus')
+        except Exception:
+            try:
+                supabase.storage.create_bucket('menus', options={'public': True})
+            except Exception:
+                pass
+                
+        file_ext = file.filename.split('.')[-1]
+        file_name = f"menus/{year}_{month}_{uuid.uuid4().hex}.{file_ext}"
+        file_content = await file.read()
+        
+        res = supabase.storage.from_("menus").upload(file_name, file_content, {"content-type": file.content_type})
+        public_url = supabase.storage.from_("menus").get_public_url(file_name)
+        
+        existing_menu = db.query(models.Menu).filter(
+            models.Menu.year == year,
+            models.Menu.month == month
+        ).first()
+        if existing_menu:
+            existing_menu.image_url = public_url
+        else:
+            new_menu = models.Menu(year=year, month=month, image_url=public_url)
+            db.add(new_menu)
+        db.commit()
+        return {"message": "Menu uploaded successfully", "image_url": public_url}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to upload to Supabase: {str(e)}")
 
 @router.get("/headcounts")
 def get_daily_headcounts(
