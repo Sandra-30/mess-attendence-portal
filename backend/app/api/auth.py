@@ -36,7 +36,7 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=schemas.Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    if form_data.username == "WARDEN" and form_data.password == "warden@lh":
+    if form_data.username.strip().upper() == "WARDEN" and form_data.password.strip() == "warden@lh":
         access_token = security.create_access_token(data={"sub": "WARDEN", "role": "WARDEN"})
         return {"access_token": access_token, "token_type": "bearer"}
 
