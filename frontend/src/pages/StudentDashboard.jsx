@@ -17,6 +17,7 @@ export default function StudentDashboard() {
   
   const [selectedEditDate, setSelectedEditDate] = useState(null);
   const [studentName, setStudentName] = useState('');
+  const [studentRoom, setStudentRoom] = useState('');
   
   const navigate = useNavigate();
 
@@ -28,6 +29,9 @@ export default function StudentDashboard() {
         const payload = JSON.parse(atob(token.split('.')[1]));
         if (payload.name) {
           setStudentName(payload.name);
+        }
+        if (payload.room_number) {
+          setStudentRoom(payload.room_number);
         }
       } catch (err) {}
     }
@@ -205,8 +209,8 @@ export default function StudentDashboard() {
 
   return (
     <div className="container" style={{ paddingBottom: '4rem' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h2>{studentName ? `Welcome, ${studentName.split(' ')[0]}` : 'Student Dashboard'}</h2>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <h2>{studentName ? `Welcome, ${studentName.split(' ')[0]} ${studentRoom ? `(Room: ${studentRoom})` : ''}` : 'Student Dashboard'}</h2>
         <div style={{ display: 'flex', gap: '1rem' }}>
           <button onClick={() => setShowPasswordTab(!showPasswordTab)} className="btn" style={{ background: 'transparent', color: 'var(--text-secondary)' }}>
             <Key size={20} style={{ marginRight: '8px' }} /> Change Password
@@ -217,6 +221,44 @@ export default function StudentDashboard() {
         </div>
       </header>
       
+      {/* Monthly Summary Cards */}
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
+        <div className="glass-card" style={{ padding: '1.5rem', flex: 1, minWidth: '150px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <h4 style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Mess Days</h4>
+          <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--success-color)' }}>
+            {(() => {
+              const year = currentMonth.getFullYear();
+              const month = currentMonth.getMonth();
+              const daysInMonth = new Date(year, month + 1, 0).getDate();
+              let cuts = 0;
+              for (let d = 1; d <= daysInMonth; d++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const att = monthlyAttendance[dateStr];
+                if (att && !att.breakfast && !att.lunch && !att.dinner) cuts++;
+              }
+              return daysInMonth - cuts;
+            })()}
+          </div>
+        </div>
+        <div className="glass-card" style={{ padding: '1.5rem', flex: 1, minWidth: '150px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <h4 style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Mess Cuts</h4>
+          <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--danger-color)' }}>
+            {(() => {
+              const year = currentMonth.getFullYear();
+              const month = currentMonth.getMonth();
+              const daysInMonth = new Date(year, month + 1, 0).getDate();
+              let cuts = 0;
+              for (let d = 1; d <= daysInMonth; d++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const att = monthlyAttendance[dateStr];
+                if (att && !att.breakfast && !att.lunch && !att.dinner) cuts++;
+              }
+              return cuts;
+            })()}
+          </div>
+        </div>
+      </div>
+
       {showPasswordTab && (
         <div className="glass-panel" style={{ padding: '2rem', marginBottom: '2rem', animation: 'fadeIn 0.3s ease' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
