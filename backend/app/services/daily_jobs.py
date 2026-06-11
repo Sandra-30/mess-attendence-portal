@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.db.database import SessionLocal
 from app.models import models
 from app.core.config import settings
+from app.services.email_service import send_email
 
 logger = logging.getLogger(__name__)
 
@@ -31,8 +32,28 @@ def evaluate_dynamic_rules():
             if t3_att and (t3_att.breakfast or t3_att.lunch or t3_att.dinner):
                 t3_att.is_locked = True
             else:
-                # Still blank, trigger automated reminder email (mocked as console log)
-                logger.info(f"REMINDER EMAIL: Student {student.name} ({student.email}), please log in to mark attendance for {t_minus_3_date}. Link: https://production-app-url/login")
+                # Still blank, trigger automated reminder email
+                logger.info(f"Dispatching REMINDER EMAIL to Student {student.name} ({student.email}) for {t_minus_3_date}")
+                
+                subject = f"Action Required: Mess Attendance for {t_minus_3_date.strftime('%d %b %Y')}"
+                html_body = f"""
+                <html>
+                <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+                    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+                        <h2 style="color: #2563eb;">Mess Attendance Reminder</h2>
+                        <p>Hi <strong>{student.name}</strong>,</p>
+                        <p>You have not marked your attendance for <strong>{t_minus_3_date.strftime('%A, %d %B %Y')}</strong>.</p>
+                        <p style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 10px; color: #b91c1c;">
+                            <strong>Warning:</strong> If you do not mark your attendance, the system will automatically assume you are <strong>Present</strong> and you will be billed for all meals. Furthermore, you may incur a late fine.
+                        </p>
+                        <p>Please log in to the portal immediately to update your status.</p>
+                        <a href="https://mess-attendence-portal.vercel.app" style="display: inline-block; background-color: #2563eb; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Log In to Portal</a>
+                        <p style="margin-top: 20px; font-size: 0.9em; color: #666;">Thank you,<br/>Warden Administration</p>
+                    </div>
+                </body>
+                </html>
+                """
+                send_email(to_email=student.email, subject=subject, html_content=html_body)
             
             # ---------------- T-2 Logic ----------------
             # At T-2 Days:
