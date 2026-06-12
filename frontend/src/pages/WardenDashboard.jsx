@@ -199,6 +199,29 @@ export default function WardenDashboard() {
                 {isBroadcasting ? 'Broadcasting...' : 'Broadcast to All Students'}
               </button>
             </form>
+
+            <hr style={{ border: '1px solid var(--border-color)', margin: '2rem 0' }} />
+            
+            <h3>Official Bill Announcements</h3>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>Send the official "Bill is Ready" notification for a specific month.</p>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+              <div className="input-group" style={{ margin: 0 }}>
+                <label className="input-label">Month</label>
+                <input type="number" min="1" max="12" className="glass-input" style={{ width: '100px' }} value={billingMonth} onChange={e => setBillingMonth(e.target.value)} />
+              </div>
+              <div className="input-group" style={{ margin: 0 }}>
+                <label className="input-label">Year</label>
+                <input type="number" min="2000" max="2100" className="glass-input" style={{ width: '120px' }} value={billingYear} onChange={e => setBillingYear(e.target.value)} />
+              </div>
+              <button 
+                onClick={handleNotifyBill}
+                disabled={isNotifying}
+                className="btn btn-primary"
+                style={{ background: 'var(--success-color)' }}
+              >
+                {isNotifying ? 'Sending...' : `Notify Bill Ready for ${billingMonth}/${billingYear}`}
+              </button>
+            </div>
           </div>
         )}
 
@@ -295,16 +318,7 @@ export default function WardenDashboard() {
         {/* Billing Tab */}
         {activeTab === 'billing' && billingMatrix && (
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3>Billing Data</h3>
-              <button 
-                onClick={handleNotifyBill}
-                disabled={isNotifying}
-                className="btn btn-primary"
-              >
-                {isNotifying ? 'Sending...' : `Notify Bill Ready (${billingMonth}/${billingYear})`}
-              </button>
-            </div>
+            <h3>Billing Data</h3>
             <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', marginBottom: '2rem' }}>
               <div className="input-group" style={{ margin: 0 }}>
                 <label className="input-label">Month</label>
