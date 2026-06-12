@@ -212,6 +212,19 @@ export default function StudentDashboard() {
     return cells;
   };
 
+  const monthStats = (() => {
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    let cuts = 0;
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const att = monthlyAttendance[dateStr];
+      if (att && !att.breakfast && !att.lunch && !att.dinner) cuts++;
+    }
+    return { daysInMonth, cuts };
+  })();
+
   return (
     <div className="container" style={{ paddingBottom: '4rem' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem', position: 'relative' }}>
@@ -274,42 +287,41 @@ export default function StudentDashboard() {
       </header>
       
       {/* Monthly Summary Cards */}
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
         <div className="glass-card" style={{ padding: '1.5rem', flex: 1, minWidth: '150px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           <h4 style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Mess Days</h4>
           <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--success-color)' }}>
-            {(() => {
-              const year = currentMonth.getFullYear();
-              const month = currentMonth.getMonth();
-              const daysInMonth = new Date(year, month + 1, 0).getDate();
-              let cuts = 0;
-              for (let d = 1; d <= daysInMonth; d++) {
-                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                const att = monthlyAttendance[dateStr];
-                if (att && !att.breakfast && !att.lunch && !att.dinner) cuts++;
-              }
-              return daysInMonth - cuts;
-            })()}
+            {monthStats.daysInMonth - monthStats.cuts}
           </div>
         </div>
         <div className="glass-card" style={{ padding: '1.5rem', flex: 1, minWidth: '150px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           <h4 style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Mess Cuts</h4>
-          <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--danger-color)' }}>
-            {(() => {
-              const year = currentMonth.getFullYear();
-              const month = currentMonth.getMonth();
-              const daysInMonth = new Date(year, month + 1, 0).getDate();
-              let cuts = 0;
-              for (let d = 1; d <= daysInMonth; d++) {
-                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                const att = monthlyAttendance[dateStr];
-                if (att && !att.breakfast && !att.lunch && !att.dinner) cuts++;
-              }
-              return cuts;
-            })()}
+          <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: monthStats.cuts > 10 ? 'var(--danger-color)' : 'white' }}>
+            {monthStats.cuts}
           </div>
         </div>
       </div>
+
+      {monthStats.cuts > 10 && (
+        <div className="glass-panel" style={{ 
+          padding: '1.5rem', marginBottom: '2rem', border: '1px solid var(--danger-color)', 
+          background: 'rgba(255, 59, 48, 0.1)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' 
+        }}>
+          <AlertCircle size={32} color="var(--danger-color)" style={{ marginBottom: '1rem' }} />
+          <h3 style={{ color: 'white', marginBottom: '0.5rem' }}>Maximum Mess Cuts Exceeded</h3>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', maxWidth: '600px' }}>
+            You have exceeded the maximum limit of 10 mess cuts for this month ({monthStats.cuts} cuts taken). 
+            To avail the financial discount for these extra cuts, you must submit an official request with valid documents to the Warden.
+          </p>
+          <a 
+            href={`mailto:wardenlh@gecskp.ac.in?subject=Mess Cut Exception Request - ${studentName} - Room ${studentRoom}&body=Dear Warden,%0D%0A%0D%0AI am requesting an exception for exceeding the 10 mess cut limit for the month of ${currentMonth.toLocaleString('default', { month: 'long' })} ${currentMonth.getFullYear()}. Attached are my supporting documents.%0D%0A%0D%0AThank you,%0D%0A${studentName}`}
+            className="btn btn-primary"
+            style={{ textDecoration: 'none', background: 'var(--danger-color)' }}
+          >
+            Email Request to Warden
+          </a>
+        </div>
+      )}
 
       {showPasswordTab && (
         <div className="glass-panel" style={{ padding: '2rem', marginBottom: '2rem', animation: 'fadeIn 0.3s ease' }}>
