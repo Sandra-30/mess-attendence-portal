@@ -364,7 +364,7 @@ export default function WardenDashboard() {
         )}
 
         {/* Billing Tab */}
-        {activeTab === 'billing' && billingMatrix && (
+        {activeTab === 'billing' && (
           <div>
             <h3>Billing Data</h3>
             <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
@@ -410,16 +410,18 @@ export default function WardenDashboard() {
               )}
             </div>
 
-            <div className="glass-card" style={{ padding: '1.5rem', marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ color: 'var(--text-secondary)' }}>Total Hostel Days Accumulated</div>
-                <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>{billingMatrix.total_hostel_days} days</div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ color: 'var(--text-secondary)' }}>Total Registered Students</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{billingMatrix.student_matrix.length}</div>
-              </div>
-            </div>
+            {billingMatrix ? (
+              <>
+                <div className="glass-card" style={{ padding: '1.5rem', marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ color: 'var(--text-secondary)' }}>Total Hostel Days Accumulated</div>
+                    <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>{billingMatrix.total_hostel_days} days</div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ color: 'var(--text-secondary)' }}>Total Registered Students</div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{billingMatrix.student_matrix.length}</div>
+                  </div>
+                </div>
 
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -444,10 +446,25 @@ export default function WardenDashboard() {
                   ))}
                 </tbody>
               </table>
+              <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+                <button onClick={fetchBillingMatrix} className="btn" style={{ background: 'var(--surface-color)', color: 'white' }}>
+                  <RefreshCw size={16} style={{ marginRight: '8px' }} /> Refresh Data
+                </button>
+                <button onClick={handleNotifyBill} disabled={isNotifying} className="btn btn-primary" style={{ background: 'var(--success-color)' }}>
+                  <CheckCircle size={16} style={{ marginRight: '8px' }} /> 
+                  {isNotifying ? 'Notifying...' : 'Notify Bill Ready'}
+                </button>
+              </div>
             </div>
+              </>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
+                Loading billing matrix...
+              </div>
+            )}
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }
