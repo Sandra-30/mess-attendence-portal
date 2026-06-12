@@ -20,10 +20,10 @@ export default function StudentDashboard() {
   const [studentName, setStudentName] = useState('');
   const [studentRoom, setStudentRoom] = useState('');
   const [studentEmail, setStudentEmail] = useState('');
-  const [holidays, setHolidays] = useState([]);
   
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [holidays, setHolidays] = useState([]);
   
   const navigate = useNavigate();
 
@@ -54,33 +54,17 @@ export default function StudentDashboard() {
       const year = currentMonth.getFullYear();
       const month = currentMonth.getMonth() + 1;
       
-      const [attRes, finesRes, notifRes, holRes] = await Promise.all([
+      const [attRes, finesRes, notifRes] = await Promise.all([
         api.get(`/student/attendance/month/${year}/${month}`),
         api.get('/student/fines'),
-        api.get('/student/notifications'),
-        api.get(`/student/holidays?month=${month}&year=${year}`)
+        api.get('/student/notifications')
       ]);
       
       const attMap = {};
       attRes.data.forEach(a => {
         attMap[a.target_date] = a;
-      });
-      
-      setMonthlyAttendance(attMap);
-      setFines(finesRes.data);
-      setNotifications(notifRes.data);
-      setHolidays(holRes.data);
-      setSelectedEditDate(null);
-    } catch (err) {
-      if (err.response?.status === 401) {
-        navigate('/login');
-      } else {
-        setError('Failed to fetch dashboard data. Please try again later.');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchHolidays();
+  }, [currentMonth, navigate]);
 
   const handleQuickMark = async (dateStr, isPresent) => {
     try {
@@ -171,10 +155,10 @@ export default function StudentDashboard() {
       const isLocked = (att && att.is_locked) || (diffDays <= 2);
       
       const isSelected = selectedEditDate === dateStr;
-      const isHoliday = holidays.includes(dateStr);
       
       const isFullyPresent = att && att.breakfast && att.lunch && att.dinner;
       const isFullyAbsent = att && !att.breakfast && !att.lunch && !att.dinner;
+      const isHoliday = holidays.includes(dateStr);
       
       let borderColor = '';
       if (isHoliday) borderColor = 'var(--border-color)';
@@ -187,17 +171,20 @@ export default function StudentDashboard() {
           className={`calendar-cell ${isSelected ? 'active' : ''}`}
           style={{ 
             borderColor: borderColor || 'var(--glass-border)', 
-            opacity: isLocked ? 0.6 : 1,
-            background: isLocked ? 'rgba(0, 0, 0, 0.3)' : (isHoliday ? 'rgba(0,0,0,0.1)' : '')
+            opacity: (isLocked || isHoliday) ? 0.6 : 1,
+            background: (isLocked || isHoliday) ? 'rgba(0, 0, 0, 0.3)' : ''
           }}
-          title={isHoliday ? "Hostel Closed" : ""}
         >
-          <div className="calendar-cell-date" style={{ color: dateStr === todayStr ? 'var(--primary-color)' : (isLocked ? 'var(--text-secondary)' : '') }}>
+          <div className="calendar-cell-date" style={{ color: dateStr === todayStr ? 'var(--primary-color)' : ((isLocked || isHoliday) ? 'var(--text-secondary)' : '') }}>
             {isLocked && !isHoliday && <Lock size={12} style={{ marginRight: '4px', verticalAlign: 'middle' }}/>}
             {d}
           </div>
           
-          {!isHoliday && (
+          {isHoliday ? (
+            <div style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '10px', fontStyle: 'italic' }}>
+              Hostel Closed
+            </div>
+          ) : (
             <div className="calendar-btn-group">
               <button 
                 className={`cal-btn absent ${isFullyAbsent ? 'selected' : ''}`}
@@ -230,14 +217,29 @@ export default function StudentDashboard() {
     const month = currentMonth.getMonth();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     let cuts = 0;
+    
+    // Total working days in month (days in month minus holidays in month)
+    let holidaysInMonthCount = 0;
+
     for (let d = 1; d <= daysInMonth; d++) {
       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-      if (holidays.includes(dateStr)) continue; // Ignore cuts on holidays
+      if (holidays.includes(dateStr)) {
+        holidaysInMonthCount++;
+        continue; // Skip counting cuts on holidays
+      }
+      
       const att = monthlyAttendance[dateStr];
-      if (att && !att.breakfast && !att.lunch && !att.dinner) cuts++;
+      const isFullyAbsent = att && !att.breakfast && !att.lunch && !att.dinner;
+      if (isFullyAbsent) {
+        cuts++;
+      }
     }
-    const workingDays = daysInMonth - holidays.length;
-    return { workingDays, cuts };
+    
+    return {
+      total: daysInMonth - holidaysInMonthCount,
+      cuts: cuts,
+      present: (daysInMonth - holidaysInMonthCount) - cuts
+    };
   })();
 
   return (
@@ -307,7 +309,7 @@ export default function StudentDashboard() {
         <div className="glass-card" style={{ padding: '1.5rem', flex: 1, minWidth: '150px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           <h4 style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Mess Days</h4>
           <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--success-color)' }}>
-            {Math.max(0, monthStats.workingDays - monthStats.cuts)}
+            {monthStats.present} / {monthStats.total}
           </div>
         </div>
         <div className="glass-card" style={{ padding: '1.5rem', flex: 1, minWidth: '150px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>

@@ -30,20 +30,6 @@ def get_monthly_attendance(
     
     return attendances
 
-@router.get("/holidays")
-def get_holidays(
-    month: int,
-    year: int,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(deps.get_current_active_user)
-):
-    from sqlalchemy import func
-    holidays = db.query(models.Holiday).filter(
-        func.extract('month', models.Holiday.date) == month,
-        func.extract('year', models.Holiday.date) == year
-    ).all()
-    return [h.date.isoformat() for h in holidays]
-
 @router.get("/attendance/{target_date}", response_model=schemas.AttendanceResponse)
 def get_attendance(
     target_date: datetime.date,
@@ -146,3 +132,10 @@ def read_notification(
     if not notif:
         raise HTTPException(status_code=404, detail="Notification not found")
     return notif
+
+@router.get("/holidays", response_model=list[schemas.HolidayResponse])
+def get_student_holidays(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(deps.get_current_active_user)
+):
+    return db.query(models.Holiday).order_by(models.Holiday.date).all()
