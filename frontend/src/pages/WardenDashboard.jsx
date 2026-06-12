@@ -367,15 +367,24 @@ export default function WardenDashboard() {
         {activeTab === 'billing' && (
           <div>
             <h3>Billing Data</h3>
-            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-              <div className="input-group" style={{ margin: 0 }}>
-                <label className="input-label">Month</label>
-                <input type="number" min="1" max="12" className="glass-input" style={{ width: '100px' }} value={billingMonth} onChange={e => setBillingMonth(e.target.value)} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <div className="input-group" style={{ margin: 0 }}>
+                  <label className="input-label">Month</label>
+                  <input type="number" min="1" max="12" className="glass-input" style={{ width: '100px' }} value={billingMonth} onChange={e => setBillingMonth(e.target.value)} />
+                </div>
+                <div className="input-group" style={{ margin: 0 }}>
+                  <label className="input-label">Year</label>
+                  <input type="number" min="2000" max="2100" className="glass-input" style={{ width: '120px' }} value={billingYear} onChange={e => setBillingYear(e.target.value)} />
+                </div>
               </div>
-              <div className="input-group" style={{ margin: 0 }}>
-                <label className="input-label">Year</label>
-                <input type="number" min="2000" max="2100" className="glass-input" style={{ width: '120px' }} value={billingYear} onChange={e => setBillingYear(e.target.value)} />
-              </div>
+              
+              {billingMatrix && (
+                <div style={{ background: 'var(--surface-color)', padding: '0.75rem 1.5rem', borderRadius: '12px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Total Students:</span>
+                  <span style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{billingMatrix.student_matrix.length}</span>
+                </div>
+              )}
             </div>
 
             <div className="glass-card" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
@@ -412,12 +421,6 @@ export default function WardenDashboard() {
 
             {billingMatrix ? (
               <>
-                <div className="glass-card" style={{ padding: '1.5rem', marginBottom: '2rem', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ color: 'var(--text-secondary)' }}>Total Registered Students</div>
-                    <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>{billingMatrix.student_matrix.length}</div>
-                  </div>
-                </div>
 
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
