@@ -42,8 +42,8 @@ export default function WardenDashboard() {
   const [billingYear, setBillingYear] = useState(new Date().getFullYear());
   
   const [holidays, setHolidays] = useState([]);
-  const [newHolidayDate, setNewHolidayDate] = useState('');
-  const [newHolidayDesc, setNewHolidayDesc] = useState('');
+  const [holidayStartDate, setHolidayStartDate] = useState('');
+  const [holidayEndDate, setHolidayEndDate] = useState('');
 
   const [message, setMessage] = useState({ type: '', text: '' });
   const navigate = useNavigate();
@@ -152,12 +152,12 @@ export default function WardenDashboard() {
 
   const handleAddHoliday = async (e) => {
     e.preventDefault();
-    if (!newHolidayDate) return;
+    if (!holidayStartDate || !holidayEndDate) return;
     try {
-      await api.post('/warden/holidays', { date: newHolidayDate, description: newHolidayDesc });
-      setMessage({ type: 'success', text: 'Holiday added successfully.' });
-      setNewHolidayDate('');
-      setNewHolidayDesc('');
+      await api.post('/warden/holidays/bulk', { start_date: holidayStartDate, end_date: holidayEndDate });
+      setMessage({ type: 'success', text: 'Holidays added successfully.' });
+      setHolidayStartDate('');
+      setHolidayEndDate('');
       fetchHolidays();
       if (activeTab === 'billing') fetchBillingMatrix();
     } catch (err) {
@@ -384,21 +384,21 @@ export default function WardenDashboard() {
               
               <form onSubmit={handleAddHoliday} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
                 <div className="input-group" style={{ margin: 0 }}>
-                  <label className="input-label">Date</label>
-                  <input type="date" className="glass-input" value={newHolidayDate} onChange={e => setNewHolidayDate(e.target.value)} required />
+                  <label className="input-label">Start Date</label>
+                  <input type="date" className="glass-input" value={holidayStartDate} onChange={e => setHolidayStartDate(e.target.value)} required />
                 </div>
-                <div className="input-group" style={{ margin: 0, flex: 1, minWidth: '200px' }}>
-                  <label className="input-label">Description (Optional)</label>
-                  <input type="text" className="glass-input" placeholder="e.g. Diwali Vacation" value={newHolidayDesc} onChange={e => setNewHolidayDesc(e.target.value)} />
+                <div className="input-group" style={{ margin: 0 }}>
+                  <label className="input-label">End Date</label>
+                  <input type="date" className="glass-input" value={holidayEndDate} onChange={e => setHolidayEndDate(e.target.value)} required />
                 </div>
-                <button type="submit" className="btn btn-primary" style={{ marginBottom: '2px' }}>Add Holiday</button>
+                <button type="submit" className="btn btn-primary" style={{ marginBottom: '2px' }}>Add Holidays</button>
               </form>
 
               {holidays.length > 0 ? (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                   {holidays.map(h => (
                     <div key={h.id} style={{ background: 'var(--surface-hover)', padding: '0.5rem 1rem', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}>
-                      <span><strong>{h.date}</strong> {h.description && `- ${h.description}`}</span>
+                      <span><strong>{h.date}</strong></span>
                       <button onClick={() => handleRemoveHoliday(h.id)} style={{ background: 'transparent', border: 'none', color: 'var(--danger-color)', cursor: 'pointer', display: 'flex' }}>
                         <X size={14} />
                       </button>

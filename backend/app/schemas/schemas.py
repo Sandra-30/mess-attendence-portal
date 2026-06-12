@@ -87,6 +87,10 @@ class HolidayCreate(BaseModel):
     date: date
     description: Optional[str] = None
 
+class HolidayBulkCreate(BaseModel):
+    start_date: date
+    end_date: date
+
 class HolidayResponse(BaseModel):
     id: int
     date: date

@@ -248,6 +248,32 @@ def create_holiday(
     db.refresh(new_holiday)
     return new_holiday
 
+@router.post("/holidays/bulk", response_model=list[schemas.HolidayResponse])
+def create_bulk_holidays(
+    payload: schemas.HolidayBulkCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(deps.get_current_warden)
+):
+    from datetime import timedelta
+    delta = payload.end_date - payload.start_date
+    created_holidays = []
+    
+    if delta.days < 0:
+        raise HTTPException(status_code=400, detail="End date must be on or after start date")
+        
+    for i in range(delta.days + 1):
+        target_date = payload.start_date + timedelta(days=i)
+        existing = db.query(models.Holiday).filter(models.Holiday.date == target_date).first()
+        if not existing:
+            new_holiday = models.Holiday(date=target_date)
+            db.add(new_holiday)
+            created_holidays.append(new_holiday)
+            
+    db.commit()
+    for h in created_holidays:
+        db.refresh(h)
+    return created_holidays
+
 @router.delete("/holidays/{holiday_id}")
 def delete_holiday(
     holiday_id: int,
