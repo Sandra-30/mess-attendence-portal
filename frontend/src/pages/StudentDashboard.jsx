@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar as CalendarIcon, LogOut, Utensils, AlertCircle, ChevronLeft, ChevronRight, Lock, Edit2, X, Check, Key, Bell } from 'lucide-react';
 import api from '../api';
+import ThemeToggle from '../components/ThemeToggle';
 
 export default function StudentDashboard() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -234,6 +235,7 @@ export default function StudentDashboard() {
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem', position: 'relative' }}>
         <h2>{studentName ? `Welcome, ${studentName.split(' ')[0]} ${studentRoom ? `(Room: ${studentRoom})` : ''}` : 'Student Dashboard'}</h2>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <ThemeToggle />
           <div style={{ position: 'relative' }}>
             <button 
               onClick={() => setShowNotifications(!showNotifications)} 

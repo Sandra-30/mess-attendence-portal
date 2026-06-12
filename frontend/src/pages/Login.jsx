@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, Mail, Eye, EyeOff } from 'lucide-react';
 import api from '../api';
+import ThemeToggle from '../components/ThemeToggle';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -43,6 +44,9 @@ export default function Login() {
   
   return (
     <div className="auth-wrapper">
+      <div style={{ position: 'absolute', top: '20px', right: '20px' }}>
+        <ThemeToggle />
+      </div>
       <div className="glass-panel auth-card">
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <h2>Mess Attendance Portal</h2>

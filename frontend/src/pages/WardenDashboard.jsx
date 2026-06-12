@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Upload, Users, Image as ImageIcon, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import api from '../api';
+import ThemeToggle from '../components/ThemeToggle';
 
 const sortRooms = (a, b) => {
   const parseRoom = (room) => {
@@ -146,9 +147,12 @@ export default function WardenDashboard() {
     <div className="container">
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <h2>Warden Dashboard</h2>
-        <button onClick={logout} className="btn" style={{ background: 'transparent', color: 'var(--text-secondary)' }}>
-          <LogOut size={20} style={{ marginRight: '8px' }} /> Logout
-        </button>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <ThemeToggle />
+          <button onClick={logout} className="btn" style={{ background: 'transparent', color: 'var(--text-secondary)' }}>
+            <LogOut size={20} style={{ marginRight: '8px' }} /> Logout
+          </button>
+        </div>
       </header>
 
       {message.text && (
