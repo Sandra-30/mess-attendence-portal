@@ -599,8 +599,8 @@ export default function StudentDashboard() {
                 <tbody>
                   {rosterData.map(student => (
                     <tr key={student.student_id} style={{ borderBottom: '1px solid var(--glass-border)' }}>
-                      <td style={{ padding: '1rem' }}>{student.name}</td>
-                      <td style={{ padding: '1rem' }}>{student.room_number}</td>
+                      <td style={{ padding: '1rem' }}>{student.name || 'Unknown Student'}</td>
+                      <td style={{ padding: '1rem' }}>{student.room_number || 'N/A'}</td>
                       <td style={{ padding: '1rem', textAlign: 'center', color: student.breakfast ? 'var(--success-color)' : 'var(--danger-color)' }}>
                         {student.breakfast ? <Check size={18} /> : <X size={18} />}
                       </td>

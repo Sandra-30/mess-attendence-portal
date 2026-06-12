@@ -61,8 +61,8 @@ class LedgerResponse(BaseModel):
 
 class DailyAttendanceResponse(BaseModel):
     student_id: int
-    name: str
-    room_number: str
+    name: Optional[str] = None
+    room_number: Optional[str] = None
     breakfast: bool
     lunch: bool
     dinner: bool
