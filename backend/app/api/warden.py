@@ -124,9 +124,13 @@ def get_daily_headcounts(
 def get_billing_matrix(
     month: int,
     year: int,
+    working_days: int = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(deps.get_current_warden)
 ):
+    import calendar
+    days_in_month = calendar.monthrange(year, month)[1]
+    
     # Get all students
     students = db.query(models.User).filter(models.User.role == "STUDENT").all()
     
@@ -141,11 +145,19 @@ def get_billing_matrix(
             func.extract('year', models.Attendance.target_date) == year
         ).all()
         
-        days_present = 0
+        original_days_present = 0
         for a in student_attendances:
             if a.breakfast or a.lunch or a.dinner:
-                days_present += 1
+                original_days_present += 1
                 
+        if working_days is not None:
+            # Calculate cuts based on the calendar month
+            cuts = days_in_month - original_days_present
+            # Calculate actual days present based on the provided working_days
+            days_present = max(0, working_days - cuts)
+        else:
+            days_present = original_days_present
+            
         total_hostel_days += days_present
         
         # Get fines

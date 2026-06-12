@@ -40,6 +40,7 @@ export default function WardenDashboard() {
   const [billingMatrix, setBillingMatrix] = useState(null);
   const [billingMonth, setBillingMonth] = useState(new Date().getMonth() + 1);
   const [billingYear, setBillingYear] = useState(new Date().getFullYear());
+  const [workingDays, setWorkingDays] = useState(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate());
 
   const [message, setMessage] = useState({ type: '', text: '' });
   const navigate = useNavigate();
@@ -82,7 +83,7 @@ export default function WardenDashboard() {
 
   const fetchBillingMatrix = async () => {
     try {
-      const res = await api.get(`/warden/billing-matrix?month=${billingMonth}&year=${billingYear}`);
+      const res = await api.get(`/warden/billing-matrix?month=${billingMonth}&year=${billingYear}&working_days=${workingDays}`);
       const data = res.data;
       if (data && data.student_matrix) {
         data.student_matrix.sort(sortRooms);
@@ -141,7 +142,12 @@ export default function WardenDashboard() {
     if (activeTab === 'whitelist') fetchWhitelist();
     if (activeTab === 'headcounts') fetchHeadcounts();
     if (activeTab === 'billing') fetchBillingMatrix();
-  }, [activeTab, headcountDate, billingMonth, billingYear]);
+  }, [activeTab, headcountDate, billingMonth, billingYear, workingDays]);
+
+  useEffect(() => {
+    const days = new Date(billingYear, billingMonth, 0).getDate();
+    setWorkingDays(days);
+  }, [billingMonth, billingYear]);
 
   return (
     <div className="container">
@@ -323,7 +329,7 @@ export default function WardenDashboard() {
         {activeTab === 'billing' && billingMatrix && (
           <div>
             <h3>Billing Data</h3>
-            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', marginBottom: '2rem' }}>
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
               <div className="input-group" style={{ margin: 0 }}>
                 <label className="input-label">Month</label>
                 <input type="number" min="1" max="12" className="glass-input" style={{ width: '100px' }} value={billingMonth} onChange={e => setBillingMonth(e.target.value)} />
@@ -331,6 +337,10 @@ export default function WardenDashboard() {
               <div className="input-group" style={{ margin: 0 }}>
                 <label className="input-label">Year</label>
                 <input type="number" min="2000" max="2100" className="glass-input" style={{ width: '120px' }} value={billingYear} onChange={e => setBillingYear(e.target.value)} />
+              </div>
+              <div className="input-group" style={{ margin: 0 }}>
+                <label className="input-label">Working Days</label>
+                <input type="number" min="1" max="31" className="glass-input" style={{ width: '120px' }} value={workingDays} onChange={e => setWorkingDays(e.target.value)} />
               </div>
             </div>
 
