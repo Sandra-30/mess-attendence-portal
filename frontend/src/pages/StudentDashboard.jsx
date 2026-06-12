@@ -63,9 +63,28 @@ export default function StudentDashboard() {
       const attMap = {};
       attRes.data.forEach(a => {
         attMap[a.target_date] = a;
+      });
+      
+      setMonthlyAttendance(attMap);
+      setFines(finesRes.data);
+      setNotifications(notifRes.data);
+      setSelectedEditDate(null);
+    } catch (err) {
+      if (err.response?.status === 401) {
+        localStorage.removeItem('token');
+        navigate('/login');
+      } else {
+        setError('Failed to fetch dashboard data. Please try again later.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
     fetchHolidays();
   }, [currentMonth, navigate]);
-
   const handleQuickMark = async (dateStr, isPresent) => {
     try {
       const newAtt = {

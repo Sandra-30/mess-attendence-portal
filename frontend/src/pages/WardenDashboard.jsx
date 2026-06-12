@@ -464,7 +464,7 @@ export default function WardenDashboard() {
             )}
           </div>
         )}
-      </main>
+      </div>
     </div>
   );
 }
