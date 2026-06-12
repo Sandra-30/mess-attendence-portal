@@ -191,3 +191,24 @@ def notify_bill_ready(
         count += 1
         
     return {"message": f"Successfully notified {count} students."}
+
+@router.post("/announce")
+def broadcast_announcement(
+    payload: schemas.AnnouncementCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(deps.get_current_warden)
+):
+    from app.crud import crud
+    
+    if not payload.message or not payload.message.strip():
+        raise HTTPException(status_code=400, detail="Announcement message cannot be empty.")
+        
+    students = db.query(models.User).filter(models.User.role == "STUDENT", models.User.is_active == True).all()
+    
+    count = 0
+    for student in students:
+        # Prefix with 'Announcement:' so it stands out
+        crud.create_notification(db, student.id, f"📢 Announcement: {payload.message.strip()}")
+        count += 1
+        
+    return {"message": f"Successfully broadcasted announcement to {count} students."}

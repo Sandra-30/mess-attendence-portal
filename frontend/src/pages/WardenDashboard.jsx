@@ -117,6 +117,25 @@ export default function WardenDashboard() {
     }
   };
 
+  const [announcementText, setAnnouncementText] = useState('');
+  const [isBroadcasting, setIsBroadcasting] = useState(false);
+  const handleBroadcastAnnouncement = async (e) => {
+    e.preventDefault();
+    if (!announcementText.trim()) return;
+    if (!window.confirm("Are you sure you want to broadcast this announcement to ALL students?")) return;
+    
+    setIsBroadcasting(true);
+    try {
+      const res = await api.post('/warden/announce', { message: announcementText });
+      setMessage({ type: 'success', text: res.data.message });
+      setAnnouncementText('');
+    } catch (err) {
+      setMessage({ type: 'error', text: err.response?.data?.detail || 'Failed to send announcement.' });
+    } finally {
+      setIsBroadcasting(false);
+    }
+  };
+
   useEffect(() => {
     if (activeTab === 'whitelist') fetchWhitelist();
     if (activeTab === 'headcounts') fetchHeadcounts();
@@ -142,8 +161,8 @@ export default function WardenDashboard() {
         </div>
       )}
 
-      <div className="tabs-container" style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
-        {['whitelist', 'headcounts', 'billing'].map(tab => (
+      <div className="tabs-container" style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
+        {['whitelist', 'headcounts', 'billing', 'announcements'].map(tab => (
           <button
             key={tab}
             className="btn"
@@ -159,6 +178,30 @@ export default function WardenDashboard() {
       </div>
 
       <div className="glass-panel" style={{ padding: '2rem' }}>
+        {/* Announcements Tab */}
+        {activeTab === 'announcements' && (
+          <div>
+            <h3>Broadcast Announcement</h3>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>Send a custom notification directly to all students' dashboards.</p>
+            <form onSubmit={handleBroadcastAnnouncement} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '600px' }}>
+              <div className="input-group">
+                <label className="input-label">Announcement Message</label>
+                <textarea 
+                  className="glass-input" 
+                  value={announcementText} 
+                  onChange={e => setAnnouncementText(e.target.value)}
+                  placeholder="e.g. Menu for tomorrow has been changed..."
+                  rows="4"
+                  required
+                />
+              </div>
+              <button type="submit" className="btn btn-primary" disabled={isBroadcasting} style={{ alignSelf: 'flex-start' }}>
+                {isBroadcasting ? 'Broadcasting...' : 'Broadcast to All Students'}
+              </button>
+            </form>
+          </div>
+        )}
+
         {/* Whitelist Tab */}
         {activeTab === 'whitelist' && (
           <div>

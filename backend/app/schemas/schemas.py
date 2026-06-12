@@ -79,3 +79,6 @@ class NotificationResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class AnnouncementCreate(BaseModel):
+    message: str
