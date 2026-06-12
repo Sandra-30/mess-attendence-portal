@@ -45,7 +45,17 @@ export default function StudentDashboard() {
       } catch (err) {}
     }
     fetchDashboardData();
+    fetchHolidays();
   }, [currentMonth]);
+
+  const fetchHolidays = async () => {
+    try {
+      const res = await api.get('/student/holidays');
+      setHolidays(res.data.map(h => h.date));
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -81,10 +91,6 @@ export default function StudentDashboard() {
     }
   };
 
-  useEffect(() => {
-    fetchDashboardData();
-    fetchHolidays();
-  }, [currentMonth, navigate]);
   const handleQuickMark = async (dateStr, isPresent) => {
     try {
       const newAtt = {
