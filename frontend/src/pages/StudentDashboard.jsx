@@ -18,7 +18,6 @@ export default function StudentDashboard() {
   
   const [selectedEditDate, setSelectedEditDate] = useState(null);
   const [studentName, setStudentName] = useState('');
-  const [studentName, setStudentName] = useState('');
   const [studentRoom, setStudentRoom] = useState('');
   const [studentEmail, setStudentEmail] = useState('');
   const [holidays, setHolidays] = useState([]);
