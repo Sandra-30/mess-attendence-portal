@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
-from datetime import date
+from datetime import date, datetime
 
 class UserBase(BaseModel):
     email: EmailStr
@@ -69,3 +69,13 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     email: Optional[str] = None
+
+class NotificationResponse(BaseModel):
+    id: int
+    student_id: int
+    message: str
+    is_read: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

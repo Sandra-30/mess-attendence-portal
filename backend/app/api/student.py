@@ -112,3 +112,23 @@ def change_password(
     current_user.hashed_password = get_password_hash(password_data.new_password)
     db.commit()
     return {"message": "Password updated successfully"}
+
+@router.get("/notifications", response_model=list[schemas.NotificationResponse])
+def get_notifications(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(deps.get_current_active_user)
+):
+    from app.crud import crud
+    return crud.get_student_notifications(db, current_user.id)
+
+@router.post("/notifications/{notification_id}/read", response_model=schemas.NotificationResponse)
+def read_notification(
+    notification_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(deps.get_current_active_user)
+):
+    from app.crud import crud
+    notif = crud.mark_notification_read(db, notification_id, current_user.id)
+    if not notif:
+        raise HTTPException(status_code=404, detail="Notification not found")
+    return notif

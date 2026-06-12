@@ -1,7 +1,7 @@
-from sqlalchemy import Column, Integer, String, Boolean, Date, ForeignKey, Float
+from sqlalchemy import Column, Integer, String, Boolean, Date, ForeignKey, Float, DateTime
 from sqlalchemy.orm import relationship
 from app.db.database import Base
-from datetime import date
+from datetime import date, datetime
 
 class User(Base):
     __tablename__ = "users"
@@ -16,6 +16,7 @@ class User(Base):
     
     attendances = relationship("Attendance", back_populates="student")
     fines = relationship("Ledger", back_populates="student")
+    notifications = relationship("Notification", back_populates="student")
 
 class Whitelist(Base):
     __tablename__ = "whitelist"
@@ -50,3 +51,14 @@ class Ledger(Base):
     description = Column(String)
 
     student = relationship("User", back_populates="fines")
+
+class Notification(Base):
+    __tablename__ = "notifications"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("users.id"))
+    message = Column(String)
+    is_read = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    student = relationship("User", back_populates="notifications")

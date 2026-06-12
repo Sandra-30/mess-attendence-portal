@@ -34,3 +34,26 @@ def add_whitelist(db: Session, whitelist: schemas.WhitelistCreate):
     db.commit()
     db.refresh(db_whitelist)
     return db_whitelist
+
+def get_student_notifications(db: Session, student_id: int):
+    return db.query(models.Notification).filter(
+        models.Notification.student_id == student_id
+    ).order_by(models.Notification.created_at.desc()).all()
+
+def create_notification(db: Session, student_id: int, message: str):
+    db_notif = models.Notification(student_id=student_id, message=message)
+    db.add(db_notif)
+    db.commit()
+    db.refresh(db_notif)
+    return db_notif
+
+def mark_notification_read(db: Session, notification_id: int, student_id: int):
+    notif = db.query(models.Notification).filter(
+        models.Notification.id == notification_id,
+        models.Notification.student_id == student_id
+    ).first()
+    if notif:
+        notif.is_read = True
+        db.commit()
+        db.refresh(notif)
+    return notif

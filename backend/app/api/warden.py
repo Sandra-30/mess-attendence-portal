@@ -171,3 +171,23 @@ def get_billing_matrix(
         "total_hostel_days": total_hostel_days,
         "student_matrix": matrix
     }
+
+@router.post("/notify-bill")
+def notify_bill_ready(
+    month: int,
+    year: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(deps.get_current_warden)
+):
+    from app.crud import crud
+    import calendar
+    
+    month_name = calendar.month_name[month]
+    students = db.query(models.User).filter(models.User.role == "STUDENT", models.User.is_active == True).all()
+    
+    count = 0
+    for student in students:
+        crud.create_notification(db, student.id, f"The mess bill for {month_name} {year} is now ready. Please check the notice board.")
+        count += 1
+        
+    return {"message": f"Successfully notified {count} students."}

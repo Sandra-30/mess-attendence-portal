@@ -103,6 +103,20 @@ export default function WardenDashboard() {
     }
   };
 
+  const [isNotifying, setIsNotifying] = useState(false);
+  const handleNotifyBill = async () => {
+    if (!window.confirm(`Are you sure you want to notify all students that the bill for ${billingMonth}/${billingYear} is ready?`)) return;
+    setIsNotifying(true);
+    try {
+      const res = await api.post(`/warden/notify-bill?month=${billingMonth}&year=${billingYear}`);
+      setMessage({ type: 'success', text: res.data.message });
+    } catch (err) {
+      setMessage({ type: 'error', text: err.response?.data?.detail || 'Failed to send notifications.' });
+    } finally {
+      setIsNotifying(false);
+    }
+  };
+
   useEffect(() => {
     if (activeTab === 'whitelist') fetchWhitelist();
     if (activeTab === 'headcounts') fetchHeadcounts();
@@ -238,7 +252,16 @@ export default function WardenDashboard() {
         {/* Billing Tab */}
         {activeTab === 'billing' && billingMatrix && (
           <div>
-            <h3>Billing Data</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3>Billing Data</h3>
+              <button 
+                onClick={handleNotifyBill}
+                disabled={isNotifying}
+                className="btn btn-primary"
+              >
+                {isNotifying ? 'Sending...' : `Notify Bill Ready (${billingMonth}/${billingYear})`}
+              </button>
+            </div>
             <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', marginBottom: '2rem' }}>
               <div className="input-group" style={{ margin: 0 }}>
                 <label className="input-label">Month</label>

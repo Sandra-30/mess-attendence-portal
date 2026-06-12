@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar as CalendarIcon, LogOut, Utensils, AlertCircle, ChevronLeft, ChevronRight, Lock, Edit2, X, Check, Key } from 'lucide-react';
+import { Calendar as CalendarIcon, LogOut, Utensils, AlertCircle, ChevronLeft, ChevronRight, Lock, Edit2, X, Check, Key, Bell } from 'lucide-react';
 import api from '../api';
 
 export default function StudentDashboard() {
@@ -18,6 +18,9 @@ export default function StudentDashboard() {
   const [selectedEditDate, setSelectedEditDate] = useState(null);
   const [studentName, setStudentName] = useState('');
   const [studentRoom, setStudentRoom] = useState('');
+  
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
   
   const navigate = useNavigate();
 
@@ -45,9 +48,10 @@ export default function StudentDashboard() {
       const year = currentMonth.getFullYear();
       const month = currentMonth.getMonth() + 1;
       
-      const [attRes, finesRes] = await Promise.all([
+      const [attRes, finesRes, notifRes] = await Promise.all([
         api.get(`/student/attendance/month/${year}/${month}`),
-        api.get('/student/fines')
+        api.get('/student/fines'),
+        api.get('/student/notifications')
       ]);
       
       const attMap = {};
@@ -57,12 +61,13 @@ export default function StudentDashboard() {
       
       setMonthlyAttendance(attMap);
       setFines(finesRes.data);
+      setNotifications(notifRes.data);
       setSelectedEditDate(null);
     } catch (err) {
       if (err.response?.status === 401) {
         navigate('/login');
       } else {
-        setError('Failed to fetch data');
+        setError('Failed to fetch dashboard data. Please try again later.');
       }
     } finally {
       setLoading(false);
@@ -209,9 +214,56 @@ export default function StudentDashboard() {
 
   return (
     <div className="container" style={{ paddingBottom: '4rem' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem', position: 'relative' }}>
         <h2>{studentName ? `Welcome, ${studentName.split(' ')[0]} ${studentRoom ? `(Room: ${studentRoom})` : ''}` : 'Student Dashboard'}</h2>
-        <div style={{ display: 'flex', gap: '1rem' }}>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <div style={{ position: 'relative' }}>
+            <button 
+              onClick={() => setShowNotifications(!showNotifications)} 
+              className="btn" 
+              style={{ background: 'transparent', color: 'var(--text-secondary)', position: 'relative', padding: '8px' }}
+            >
+              <Bell size={20} />
+              {notifications.filter(n => !n.is_read).length > 0 && (
+                <span style={{
+                  position: 'absolute', top: '0', right: '0', background: 'var(--danger-color)', color: 'white',
+                  borderRadius: '50%', width: '18px', height: '18px', fontSize: '10px', display: 'flex',
+                  alignItems: 'center', justifyContent: 'center', fontWeight: 'bold'
+                }}>
+                  {notifications.filter(n => !n.is_read).length}
+                </span>
+              )}
+            </button>
+            {showNotifications && (
+              <div className="glass-panel" style={{
+                position: 'absolute', top: '100%', right: '0', width: '300px', zIndex: 1000,
+                marginTop: '10px', padding: '1rem', maxHeight: '400px', overflowY: 'auto'
+              }}>
+                <h4 style={{ margin: '0 0 1rem 0', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Notifications</h4>
+                {notifications.length === 0 ? (
+                  <p style={{ color: 'var(--text-secondary)', textAlign: 'center', margin: 0 }}>No notifications</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                    {notifications.map(n => (
+                      <div 
+                        key={n.id} 
+                        onClick={() => !n.is_read && handleReadNotification(n.id)}
+                        style={{
+                          padding: '0.8rem', borderRadius: '8px', 
+                          background: n.is_read ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.15)',
+                          cursor: n.is_read ? 'default' : 'pointer',
+                          borderLeft: n.is_read ? 'none' : '3px solid var(--primary-color)'
+                        }}
+                      >
+                        <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: n.is_read ? 'var(--text-secondary)' : 'white' }}>{n.message}</p>
+                        <small style={{ color: 'var(--text-secondary)', fontSize: '0.7rem' }}>{new Date(n.created_at).toLocaleDateString()}</small>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
           <button onClick={() => setShowPasswordTab(!showPasswordTab)} className="btn" style={{ background: 'transparent', color: 'var(--text-secondary)' }}>
             <Key size={20} style={{ marginRight: '8px' }} /> Change Password
           </button>
