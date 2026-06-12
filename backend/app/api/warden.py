@@ -124,12 +124,19 @@ def get_daily_headcounts(
 def get_billing_matrix(
     month: int,
     year: int,
-    working_days: int = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(deps.get_current_warden)
 ):
     import calendar
     days_in_month = calendar.monthrange(year, month)[1]
+    
+    # Get all holidays for this month
+    holidays = db.query(models.Holiday).filter(
+        func.extract('month', models.Holiday.date) == month,
+        func.extract('year', models.Holiday.date) == year
+    ).all()
+    holiday_dates = {h.date for h in holidays}
+    working_days = days_in_month - len(holiday_dates)
     
     # Get all students
     students = db.query(models.User).filter(models.User.role == "STUDENT").all()
@@ -147,16 +154,15 @@ def get_billing_matrix(
         
         original_days_present = 0
         for a in student_attendances:
+            if a.target_date in holiday_dates:
+                continue # Ignore attendance on holidays
             if a.breakfast or a.lunch or a.dinner:
                 original_days_present += 1
                 
-        if working_days is not None:
-            # Calculate cuts based on the calendar month
-            cuts = days_in_month - original_days_present
-            # Calculate actual days present based on the provided working_days
-            days_present = max(0, working_days - cuts)
-        else:
-            days_present = original_days_present
+        # Calculate cuts based on working days only
+        # If they were present on X working days, their cuts = working_days - X
+        cuts = working_days - original_days_present
+        days_present = max(0, working_days - cuts)
             
         total_hostel_days += days_present
         
@@ -224,3 +230,41 @@ def broadcast_announcement(
         count += 1
         
     return {"message": f"Successfully broadcasted announcement to {count} students."}
+
+@router.get("/holidays", response_model=List[schemas.HolidayResponse])
+def get_holidays(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(deps.get_current_warden)
+):
+    holidays = db.query(models.Holiday).order_by(models.Holiday.date).all()
+    return holidays
+
+@router.post("/holidays", response_model=schemas.HolidayResponse)
+def create_holiday(
+    holiday: schemas.HolidayCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(deps.get_current_warden)
+):
+    existing = db.query(models.Holiday).filter(models.Holiday.date == holiday.date).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Date is already a holiday.")
+    
+    db_holiday = models.Holiday(date=holiday.date, description=holiday.description)
+    db.add(db_holiday)
+    db.commit()
+    db.refresh(db_holiday)
+    return db_holiday
+
+@router.delete("/holidays/{holiday_id}")
+def delete_holiday(
+    holiday_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(deps.get_current_warden)
+):
+    holiday = db.query(models.Holiday).filter(models.Holiday.id == holiday_id).first()
+    if not holiday:
+        raise HTTPException(status_code=404, detail="Holiday not found")
+    
+    db.delete(holiday)
+    db.commit()
+    return {"detail": "Holiday removed"}

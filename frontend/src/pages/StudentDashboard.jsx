@@ -23,6 +23,7 @@ export default function StudentDashboard() {
   
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [holidays, setHolidays] = useState([]);
   
   const navigate = useNavigate();
 
@@ -53,10 +54,11 @@ export default function StudentDashboard() {
       const year = currentMonth.getFullYear();
       const month = currentMonth.getMonth() + 1;
       
-      const [attRes, finesRes, notifRes] = await Promise.all([
+      const [attRes, finesRes, notifRes, holRes] = await Promise.all([
         api.get(`/student/attendance/month/${year}/${month}`),
         api.get('/student/fines'),
-        api.get('/student/notifications')
+        api.get('/student/notifications'),
+        api.get('/student/holidays')
       ]);
       
       const attMap = {};
@@ -67,6 +69,9 @@ export default function StudentDashboard() {
       setMonthlyAttendance(attMap);
       setFines(finesRes.data);
       setNotifications(notifRes.data);
+      
+      const holDates = holRes.data.map(h => h.date);
+      setHolidays(holDates);
       setSelectedEditDate(null);
     } catch (err) {
       if (err.response?.status === 401) {
@@ -165,7 +170,9 @@ export default function StudentDashboard() {
       const targetDate = new Date(year, month, d);
       targetDate.setHours(0, 0, 0, 0);
       const diffDays = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
-      const isLocked = (att && att.is_locked) || (diffDays <= 2);
+      
+      const isHoliday = holidays.includes(dateStr);
+      const isLocked = isHoliday || (att && att.is_locked) || (diffDays <= 2);
       
       const isSelected = selectedEditDate === dateStr;
       
@@ -183,8 +190,9 @@ export default function StudentDashboard() {
           style={{ 
             borderColor: borderColor || 'var(--glass-border)', 
             opacity: isLocked ? 0.6 : 1,
-            background: isLocked ? 'rgba(0, 0, 0, 0.3)' : ''
+            background: isHoliday ? 'rgba(0, 0, 0, 0.5)' : (isLocked ? 'rgba(0, 0, 0, 0.3)' : '')
           }}
+          title={isHoliday ? "Hostel Closed" : ""}
         >
           <div className="calendar-cell-date" style={{ color: dateStr === todayStr ? 'var(--primary-color)' : (isLocked ? 'var(--text-secondary)' : '') }}>
             {isLocked && <Lock size={12} style={{ marginRight: '4px', verticalAlign: 'middle' }}/>}
@@ -192,23 +200,29 @@ export default function StudentDashboard() {
           </div>
           
           <div className="calendar-btn-group">
-            <button 
-              className={`cal-btn absent ${isFullyAbsent ? 'selected' : ''}`}
-              onClick={() => handleQuickMark(dateStr, false)}
-              disabled={isLocked}
-              title="Absent all day"
-            ><X size={14} /></button>
-            <button 
-              className={`cal-btn present ${isFullyPresent ? 'selected' : ''}`}
-              onClick={() => handleQuickMark(dateStr, true)}
-              disabled={isLocked}
-              title="Present all day"
-            ><Check size={14} /></button>
-            <button 
-              className={`cal-btn edit ${isSelected ? 'selected' : ''}`}
-              onClick={() => setSelectedEditDate(isSelected ? null : dateStr)}
-              title={isLocked ? "View lock status" : "Edit meals"}
-            ><Edit2 size={14} /></button>
+            {isHoliday ? (
+               <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', padding: '10px 0' }}>Hostel Closed</div>
+            ) : (
+              <>
+                <button 
+                  className={`cal-btn absent ${isFullyAbsent ? 'selected' : ''}`}
+                  onClick={() => handleQuickMark(dateStr, false)}
+                  disabled={isLocked}
+                  title="Absent all day"
+                ><X size={14} /></button>
+                <button 
+                  className={`cal-btn present ${isFullyPresent ? 'selected' : ''}`}
+                  onClick={() => handleQuickMark(dateStr, true)}
+                  disabled={isLocked}
+                  title="Present all day"
+                ><Check size={14} /></button>
+                <button 
+                  className={`cal-btn edit ${isSelected ? 'selected' : ''}`}
+                  onClick={() => setSelectedEditDate(isSelected ? null : dateStr)}
+                  title={isLocked ? "View lock status" : "Edit meals"}
+                ><Edit2 size={14} /></button>
+              </>
+            )}
           </div>
         </div>
       );
@@ -222,12 +236,15 @@ export default function StudentDashboard() {
     const month = currentMonth.getMonth();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     let cuts = 0;
+    let workingDaysCount = 0;
     for (let d = 1; d <= daysInMonth; d++) {
       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      if (holidays.includes(dateStr)) continue; // ignore holidays
+      workingDaysCount++;
       const att = monthlyAttendance[dateStr];
       if (att && !att.breakfast && !att.lunch && !att.dinner) cuts++;
     }
-    return { daysInMonth, cuts };
+    return { daysInMonth: workingDaysCount, cuts };
   })();
 
   return (

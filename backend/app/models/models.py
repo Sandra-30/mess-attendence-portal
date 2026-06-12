@@ -62,3 +62,10 @@ class Notification(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     student = relationship("User", back_populates="notifications")
+
+class Holiday(Base):
+    __tablename__ = "holidays"
+
+    id = Column(Integer, primary_key=True, index=True)
+    date = Column(Date, unique=True, index=True)
+    description = Column(String, nullable=True)

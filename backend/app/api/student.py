@@ -132,3 +132,11 @@ def read_notification(
     if not notif:
         raise HTTPException(status_code=404, detail="Notification not found")
     return notif
+
+@router.get("/holidays", response_model=list[schemas.HolidayResponse])
+def get_holidays(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(deps.get_current_active_user)
+):
+    holidays = db.query(models.Holiday).order_by(models.Holiday.date).all()
+    return holidays

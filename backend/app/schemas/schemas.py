@@ -82,3 +82,13 @@ class NotificationResponse(BaseModel):
 
 class AnnouncementCreate(BaseModel):
     message: str
+
+class HolidayCreate(BaseModel):
+    date: date
+    description: Optional[str] = None
+
+class HolidayResponse(HolidayCreate):
+    id: int
+
+    class Config:
+        from_attributes = True

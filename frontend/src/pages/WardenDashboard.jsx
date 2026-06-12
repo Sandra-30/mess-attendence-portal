@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Upload, Users, Image as ImageIcon, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import { LogOut, Upload, Users, Image as ImageIcon, CheckCircle, AlertCircle, RefreshCw, X } from 'lucide-react';
 import api from '../api';
 import ThemeToggle from '../components/ThemeToggle';
 
@@ -40,7 +40,10 @@ export default function WardenDashboard() {
   const [billingMatrix, setBillingMatrix] = useState(null);
   const [billingMonth, setBillingMonth] = useState(new Date().getMonth() + 1);
   const [billingYear, setBillingYear] = useState(new Date().getFullYear());
-  const [workingDays, setWorkingDays] = useState(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate());
+  
+  const [holidays, setHolidays] = useState([]);
+  const [newHolidayDate, setNewHolidayDate] = useState('');
+  const [newHolidayDesc, setNewHolidayDesc] = useState('');
 
   const [message, setMessage] = useState({ type: '', text: '' });
   const navigate = useNavigate();
@@ -83,7 +86,7 @@ export default function WardenDashboard() {
 
   const fetchBillingMatrix = async () => {
     try {
-      const res = await api.get(`/warden/billing-matrix?month=${billingMonth}&year=${billingYear}&working_days=${workingDays}`);
+      const res = await api.get(`/warden/billing-matrix?month=${billingMonth}&year=${billingYear}`);
       const data = res.data;
       if (data && data.student_matrix) {
         data.student_matrix.sort(sortRooms);
@@ -101,7 +104,41 @@ export default function WardenDashboard() {
       data.sort(sortRooms);
       setWhitelistEntries(data);
     } catch (err) {
-      setMessage({ type: 'error', text: 'Failed to fetch list.' });
+      setMessage({ type: 'error', text: 'Failed to announce.' });
+    }
+  };
+
+  const fetchHolidays = async () => {
+    try {
+      const res = await api.get('/warden/holidays');
+      setHolidays(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleAddHoliday = async (e) => {
+    e.preventDefault();
+    if (!newHolidayDate) return;
+    try {
+      await api.post('/warden/holidays', { date: newHolidayDate, description: newHolidayDesc });
+      setMessage({ type: 'success', text: 'Holiday added.' });
+      setNewHolidayDate('');
+      setNewHolidayDesc('');
+      fetchHolidays();
+      if (activeTab === 'billing') fetchBillingMatrix();
+    } catch (err) {
+      setMessage({ type: 'error', text: err.response?.data?.detail || 'Failed to add holiday.' });
+    }
+  };
+
+  const handleDeleteHoliday = async (id) => {
+    try {
+      await api.delete(`/warden/holidays/${id}`);
+      fetchHolidays();
+      if (activeTab === 'billing') fetchBillingMatrix();
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Failed to delete holiday.' });
     }
   };
 
@@ -141,13 +178,11 @@ export default function WardenDashboard() {
   useEffect(() => {
     if (activeTab === 'whitelist') fetchWhitelist();
     if (activeTab === 'headcounts') fetchHeadcounts();
-    if (activeTab === 'billing') fetchBillingMatrix();
-  }, [activeTab, headcountDate, billingMonth, billingYear, workingDays]);
-
-  useEffect(() => {
-    const days = new Date(billingYear, billingMonth, 0).getDate();
-    setWorkingDays(days);
-  }, [billingMonth, billingYear]);
+    if (activeTab === 'billing') {
+      fetchBillingMatrix();
+      fetchHolidays();
+    }
+  }, [activeTab, headcountDate, billingMonth, billingYear]);
 
   return (
     <div className="container">
@@ -338,10 +373,36 @@ export default function WardenDashboard() {
                 <label className="input-label">Year</label>
                 <input type="number" min="2000" max="2100" className="glass-input" style={{ width: '120px' }} value={billingYear} onChange={e => setBillingYear(e.target.value)} />
               </div>
-              <div className="input-group" style={{ margin: 0 }}>
-                <label className="input-label">Working Days</label>
-                <input type="number" min="1" max="31" className="glass-input" style={{ width: '120px' }} value={workingDays} onChange={e => setWorkingDays(e.target.value)} />
-              </div>
+            </div>
+
+            <div className="glass-card" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
+              <h4>Hostel Holidays</h4>
+              <p style={{ fontSize: '0.85rem', marginBottom: '1rem' }}>Mark specific days as holidays. These days will automatically be subtracted from the total working days, and students won't be able to mark attendance on these days.</p>
+              
+              <form onSubmit={handleAddHoliday} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+                <div>
+                  <label className="input-label">Date</label>
+                  <input type="date" className="glass-input" value={newHolidayDate} onChange={e => setNewHolidayDate(e.target.value)} required />
+                </div>
+                <div>
+                  <label className="input-label">Description (Optional)</label>
+                  <input type="text" className="glass-input" placeholder="e.g. Diwali Vacation" value={newHolidayDesc} onChange={e => setNewHolidayDesc(e.target.value)} />
+                </div>
+                <button type="submit" className="btn btn-primary">Add Holiday</button>
+              </form>
+
+              {holidays.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  {holidays.map(h => (
+                    <div key={h.id} style={{ display: 'flex', alignItems: 'center', background: 'var(--surface-hover)', padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '0.9rem' }}>
+                      <span style={{ marginRight: '0.5rem' }}>{h.date} {h.description ? `(${h.description})` : ''}</span>
+                      <button onClick={() => handleDeleteHoliday(h.id)} style={{ background: 'transparent', border: 'none', color: 'var(--danger-color)', cursor: 'pointer', padding: 0 }}>
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="glass-card" style={{ padding: '1.5rem', marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
