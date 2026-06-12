@@ -59,6 +59,14 @@ class LedgerResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class DailyAttendanceResponse(BaseModel):
+    student_id: int
+    name: str
+    room_number: str
+    breakfast: bool
+    lunch: bool
+    dinner: bool
+
 class ChangePassword(BaseModel):
     old_password: str
     new_password: str

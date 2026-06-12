@@ -25,6 +25,11 @@ export default function StudentDashboard() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [holidays, setHolidays] = useState([]);
   
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [rosterDate, setRosterDate] = useState(new Date().toISOString().split('T')[0]);
+  const [rosterData, setRosterData] = useState([]);
+  const [rosterLoading, setRosterLoading] = useState(false);
+  
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -47,6 +52,24 @@ export default function StudentDashboard() {
     fetchDashboardData();
     fetchHolidays();
   }, [currentMonth]);
+
+  useEffect(() => {
+    if (activeTab === 'attendance') {
+      fetchRosterData();
+    }
+  }, [activeTab, rosterDate]);
+
+  const fetchRosterData = async () => {
+    setRosterLoading(true);
+    try {
+      const res = await api.get(`/student/daily-attendance?target_date=${rosterDate}`);
+      setRosterData(res.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setRosterLoading(false);
+    }
+  };
 
   const fetchHolidays = async () => {
     try {
@@ -328,9 +351,27 @@ export default function StudentDashboard() {
           </button>
         </div>
       </header>
+
+      <div className="tabs-container" style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
+        {['dashboard', 'attendance'].map(tab => (
+          <button
+            key={tab}
+            className="btn"
+            style={{
+              background: activeTab === tab ? 'var(--primary-color)' : 'rgba(255,255,255,0.1)',
+              color: 'white'
+            }}
+            onClick={() => { setActiveTab(tab); setError(''); }}
+          >
+            {tab === 'dashboard' ? 'My Dashboard' : 'Daily Attendance'}
+          </button>
+        ))}
+      </div>
       
-      {/* Monthly Summary Cards */}
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+      {activeTab === 'dashboard' && (
+        <>
+          {/* Monthly Summary Cards */}
+          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
         <div className="glass-card" style={{ padding: '1.5rem', flex: 1, minWidth: '150px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           <h4 style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Mess Days</h4>
           <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--success-color)' }}>
@@ -521,8 +562,65 @@ export default function StudentDashboard() {
           </div>
 
         </div>
+        </div>
         
-      </div>
+      </>
+      )}
+
+      {activeTab === 'attendance' && (
+        <div className="glass-panel" style={{ padding: '2rem' }}>
+          <h3>Daily Attendance Roster</h3>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>Select a date to view who is eating in the mess. This maintains complete transparency for all residents.</p>
+          
+          <div className="input-group" style={{ maxWidth: '300px', marginBottom: '2rem' }}>
+            <label className="input-label">Select Date</label>
+            <input 
+              type="date" 
+              className="glass-input" 
+              value={rosterDate} 
+              onChange={(e) => setRosterDate(e.target.value)} 
+            />
+          </div>
+
+          {rosterLoading ? (
+            <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>Loading roster...</p>
+          ) : rosterData.length > 0 ? (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid var(--border-color)', textAlign: 'left' }}>
+                    <th style={{ padding: '1rem' }}>Name</th>
+                    <th style={{ padding: '1rem' }}>Room</th>
+                    <th style={{ padding: '1rem', textAlign: 'center' }}>Breakfast</th>
+                    <th style={{ padding: '1rem', textAlign: 'center' }}>Lunch</th>
+                    <th style={{ padding: '1rem', textAlign: 'center' }}>Dinner</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rosterData.map(student => (
+                    <tr key={student.student_id} style={{ borderBottom: '1px solid var(--glass-border)' }}>
+                      <td style={{ padding: '1rem' }}>{student.name}</td>
+                      <td style={{ padding: '1rem' }}>{student.room_number}</td>
+                      <td style={{ padding: '1rem', textAlign: 'center', color: student.breakfast ? 'var(--success-color)' : 'var(--danger-color)' }}>
+                        {student.breakfast ? <Check size={18} /> : <X size={18} />}
+                      </td>
+                      <td style={{ padding: '1rem', textAlign: 'center', color: student.lunch ? 'var(--success-color)' : 'var(--danger-color)' }}>
+                        {student.lunch ? <Check size={18} /> : <X size={18} />}
+                      </td>
+                      <td style={{ padding: '1rem', textAlign: 'center', color: student.dinner ? 'var(--success-color)' : 'var(--danger-color)' }}>
+                        {student.dinner ? <Check size={18} /> : <X size={18} />}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>No data available for this date.</p>
+          )}
+        </div>
+      )}
+
     </div>
   );
 }

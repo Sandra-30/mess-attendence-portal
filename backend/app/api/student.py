@@ -134,8 +134,47 @@ def read_notification(
     return notif
 
 @router.get("/holidays", response_model=list[schemas.HolidayResponse])
-def get_student_holidays(
+def get_holidays(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(deps.get_current_active_user)
 ):
     return db.query(models.Holiday).order_by(models.Holiday.date).all()
+
+@router.get("/daily-attendance", response_model=list[schemas.DailyAttendanceResponse])
+def get_daily_attendance(
+    target_date: datetime.date,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(deps.get_current_active_user)
+):
+    students = db.query(models.User).filter(models.User.role == "STUDENT").all()
+    
+    # Get all attendance records for the target date
+    attendances = db.query(models.Attendance).filter(models.Attendance.target_date == target_date).all()
+    attendance_map = {a.student_id: a for a in attendances}
+    
+    roster = []
+    for s in students:
+        att = attendance_map.get(s.id)
+        if att:
+            roster.append({
+                "student_id": s.id,
+                "name": s.name,
+                "room_number": s.room_number,
+                "breakfast": att.breakfast,
+                "lunch": att.lunch,
+                "dinner": att.dinner
+            })
+        else:
+            roster.append({
+                "student_id": s.id,
+                "name": s.name,
+                "room_number": s.room_number,
+                "breakfast": False,
+                "lunch": False,
+                "dinner": False
+            })
+            
+    # Sort by room number
+    # Room numbers might be strings like "A-101", so sort as strings
+    roster.sort(key=lambda x: str(x['room_number']))
+    return roster
