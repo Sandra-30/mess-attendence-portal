@@ -18,6 +18,7 @@ export default function StudentDashboard() {
   const [selectedEditDate, setSelectedEditDate] = useState(null);
   const [studentName, setStudentName] = useState('');
   const [studentRoom, setStudentRoom] = useState('');
+  const [studentEmail, setStudentEmail] = useState('');
   
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -35,6 +36,9 @@ export default function StudentDashboard() {
         }
         if (payload.room_number) {
           setStudentRoom(payload.room_number);
+        }
+        if (payload.sub) {
+          setStudentEmail(payload.sub);
         }
       } catch (err) {}
     }
@@ -314,7 +318,9 @@ export default function StudentDashboard() {
             To avail the financial discount for these extra cuts, you must submit an official request with valid documents to the Warden.
           </p>
           <a 
-            href={`mailto:wardenlh@gecskp.ac.in?subject=Mess Cut Exception Request - ${studentName} - Room ${studentRoom}&body=Dear Warden,%0D%0A%0D%0AI am requesting an exception for exceeding the 10 mess cut limit for the month of ${currentMonth.toLocaleString('default', { month: 'long' })} ${currentMonth.getFullYear()}. Attached are my supporting documents.%0D%0A%0D%0AThank you,%0D%0A${studentName}`}
+            href={`https://mail.google.com/mail/?view=cm&fs=1&to=wardenlh@gecskp.ac.in&su=Mess Cut Exception Request - ${studentName} - Room ${studentRoom}&body=Dear Warden,%0D%0A%0D%0AI am requesting an exception for exceeding the 10 mess cut limit for the month of ${currentMonth.toLocaleString('default', { month: 'long' })} ${currentMonth.getFullYear()}. Attached are my supporting documents.%0D%0A%0D%0AThank you,%0D%0A${studentName}&authuser=${studentEmail}`}
+            target="_blank"
+            rel="noopener noreferrer"
             className="btn btn-primary"
             style={{ textDecoration: 'none', background: 'var(--danger-color)' }}
           >
