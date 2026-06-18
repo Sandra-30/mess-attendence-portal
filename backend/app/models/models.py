@@ -75,12 +75,13 @@ class Holiday(Base):
     description = Column(String, nullable=True)
 
 class MonthlyConfig(Base):
-    __tablename__ = "monthly_config"
-
+    __tablename__ = "monthly_configs"
+    
     id = Column(Integer, primary_key=True, index=True)
-    month = Column(Integer, index=True)
-    year = Column(Integer, index=True)
+    month = Column(Integer, nullable=False)
+    year = Column(Integer, nullable=False)
     per_day_amount = Column(Float, default=0.0)
+    is_published = Column(Boolean, default=False)
 
 class MonthlyBill(Base):
     __tablename__ = "monthly_bills"

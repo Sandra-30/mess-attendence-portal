@@ -417,7 +417,7 @@ export default function StudentDashboard() {
           </div>
         </div>
 
-        {monthlyBill && (
+        {monthlyBill && monthlyBill.is_published && (
           <div className="glass-card" style={{ padding: '1.5rem', flex: 2, minWidth: '300px', display: 'flex', flexDirection: 'column' }}>
             <h4 style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '1.1rem', textAlign: 'center' }}>Mess Bill Details</h4>
             
@@ -762,7 +762,9 @@ export default function StudentDashboard() {
               </table>
             </div>
           ) : (
-            <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>No billing data found for this month.</p>
+            <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
+              The bill for this month has not been finalized or published by the warden yet.
+            </p>
           )}
         </div>
       )}

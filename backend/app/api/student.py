@@ -245,7 +245,8 @@ def get_monthly_bill(
         "days_present": days_present,
         "penalties": total_fines,
         "total_bill": mess_bill,
-        "is_manual_override": is_manual_override
+        "is_manual_override": is_manual_override,
+        "is_published": config.is_published if config else False
     }
 
 @router.get("/billing-matrix")
@@ -271,7 +272,17 @@ def get_billing_matrix(
         models.MonthlyConfig.month == month,
         models.MonthlyConfig.year == year
     ).first()
-    per_day_amount = config.per_day_amount if config else 0.0
+    
+    if not config or not config.is_published:
+        return {
+            "month": month,
+            "year": year,
+            "total_hostel_days": 0,
+            "per_day_amount": 0,
+            "student_matrix": []
+        }
+        
+    per_day_amount = config.per_day_amount
 
     # Get overrides
     overrides = db.query(models.MonthlyBill).filter(
