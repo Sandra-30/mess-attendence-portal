@@ -44,7 +44,7 @@ def evaluate_dynamic_rules():
                     send_email_background(
                         to_email=student.email,
                         subject=f"Action Required: Mess Attendance for {t_minus_3_date}",
-                        body_text=f"Reminder: You have not marked your mess attendance for {t_minus_3_date}.\n\nPlease log in to the portal to mark your attendance, otherwise you will be billed by default."
+                        body_text=f"Reminder: You have not marked your mess attendance for {t_minus_3_date}.\n\nPlease log in to the portal to mark your attendance, otherwise you will be billed by default.\n\nPortal Link: {settings.FRONTEND_URL}"
                     )
                 except Exception as e:
                     logger.error(f"Failed to send T-3 reminder email to {student.email}: {e}")

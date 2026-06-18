@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     FINE_AMOUNT: int = 10
     SMTP_EMAIL: str = ""
     SMTP_PASSWORD: str = ""
+    FRONTEND_URL: str = "http://localhost:5173"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
