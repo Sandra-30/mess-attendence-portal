@@ -323,7 +323,7 @@ export default function StudentDashboard() {
   return (
     <div className="container" style={{ paddingBottom: '4rem' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem', position: 'relative' }}>
-        <h2>{studentName ? `Welcome, ${studentName.split(' ')[0]} ${studentRoom ? `(Room: ${studentRoom})` : ''}` : 'Student Dashboard'}</h2>
+        <h2>{studentName ? `Welcome ${studentName}, ${studentRoom}` : 'Student Dashboard'}</h2>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
           <ThemeToggle />
           <div style={{ position: 'relative' }}>
