@@ -137,6 +137,20 @@ def get_billing_matrix(
     ).all()
     holiday_dates = {h.date for h in holidays}
     
+    # Get config
+    config = db.query(models.MonthlyConfig).filter(
+        models.MonthlyConfig.month == month,
+        models.MonthlyConfig.year == year
+    ).first()
+    per_day_amount = config.per_day_amount if config else 0.0
+
+    # Get overrides
+    overrides = db.query(models.MonthlyBill).filter(
+        models.MonthlyBill.month == month,
+        models.MonthlyBill.year == year
+    ).all()
+    override_dict = {o.student_id: o.amount for o in overrides}
+
     # Get all students
     students = db.query(models.User).filter(models.User.role == "STUDENT").all()
     
@@ -168,21 +182,76 @@ def get_billing_matrix(
         ).all()
         total_fines = sum(f.amount for f in fines)
         
+        is_manual_override = student.id in override_dict
+        if is_manual_override:
+            mess_bill = override_dict[student.id]
+        else:
+            mess_bill = (days_present * per_day_amount) + total_fines + 310
+        
         matrix.append({
             "student_id": student.id,
             "name": student.name,
             "email": student.email,
             "room_number": student.room_number,
             "days_present": days_present,
-            "total_fines": total_fines
+            "total_fines": total_fines,
+            "mess_bill": mess_bill,
+            "is_manual_override": is_manual_override
         })
         
     return {
         "month": month,
         "year": year,
         "total_hostel_days": total_hostel_days,
+        "per_day_amount": per_day_amount,
         "student_matrix": matrix
     }
+
+@router.post("/billing/config")
+def update_billing_config(
+    payload: schemas.MonthlyConfigCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(deps.get_current_warden)
+):
+    config = db.query(models.MonthlyConfig).filter(
+        models.MonthlyConfig.month == payload.month,
+        models.MonthlyConfig.year == payload.year
+    ).first()
+    if config:
+        config.per_day_amount = payload.per_day_amount
+    else:
+        config = models.MonthlyConfig(
+            month=payload.month,
+            year=payload.year,
+            per_day_amount=payload.per_day_amount
+        )
+        db.add(config)
+    db.commit()
+    return {"message": "Configuration updated successfully"}
+
+@router.post("/billing/override")
+def update_billing_override(
+    payload: schemas.MonthlyBillOverride,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(deps.get_current_warden)
+):
+    override = db.query(models.MonthlyBill).filter(
+        models.MonthlyBill.student_id == payload.student_id,
+        models.MonthlyBill.month == payload.month,
+        models.MonthlyBill.year == payload.year
+    ).first()
+    if override:
+        override.amount = payload.amount
+    else:
+        override = models.MonthlyBill(
+            student_id=payload.student_id,
+            month=payload.month,
+            year=payload.year,
+            amount=payload.amount
+        )
+        db.add(override)
+    db.commit()
+    return {"message": "Bill override updated successfully"}
 
 @router.post("/notify-bill")
 def notify_bill_ready(
@@ -192,14 +261,66 @@ def notify_bill_ready(
     current_user: models.User = Depends(deps.get_current_warden)
 ):
     from app.crud import crud
+    from sqlalchemy import func
     import calendar
     
     month_name = calendar.month_name[month]
+    days_in_month = calendar.monthrange(year, month)[1]
+    
+    # Get holidays for this month
+    holidays = db.query(models.Holiday).filter(
+        func.extract('month', models.Holiday.date) == month,
+        func.extract('year', models.Holiday.date) == year
+    ).all()
+    holiday_dates = {h.date for h in holidays}
+    working_days = days_in_month - len(holiday_dates)
+
+    # Get config
+    config = db.query(models.MonthlyConfig).filter(
+        models.MonthlyConfig.month == month,
+        models.MonthlyConfig.year == year
+    ).first()
+    per_day_amount = config.per_day_amount if config else 0.0
+
+    # Get overrides
+    overrides = db.query(models.MonthlyBill).filter(
+        models.MonthlyBill.month == month,
+        models.MonthlyBill.year == year
+    ).all()
+    override_dict = {o.student_id: o.amount for o in overrides}
+    
     students = db.query(models.User).filter(models.User.role == "STUDENT", models.User.is_active == True).all()
     
     count = 0
     for student in students:
-        crud.create_notification(db, student.id, f"The mess bill for {month_name} {year} is now ready. Please check the notice board.")
+        student_attendances = db.query(models.Attendance).filter(
+            models.Attendance.student_id == student.id,
+            func.extract('month', models.Attendance.target_date) == month,
+            func.extract('year', models.Attendance.target_date) == year
+        ).all()
+        
+        cuts = 0
+        for a in student_attendances:
+            if not a.breakfast and not a.lunch and not a.dinner and a.target_date not in holiday_dates:
+                cuts += 1
+                
+        days_present = max(0, working_days - cuts)
+        
+        fines = db.query(models.Ledger).filter(
+            models.Ledger.student_id == student.id,
+            func.extract('month', models.Ledger.date) == month,
+            func.extract('year', models.Ledger.date) == year
+        ).all()
+        total_fines = sum(f.amount for f in fines)
+        
+        is_manual_override = student.id in override_dict
+        if is_manual_override:
+            mess_bill = override_dict[student.id]
+        else:
+            mess_bill = (days_present * per_day_amount) + total_fines + 310
+            
+        message = f"Your mess bill for {month_name} {year} is ₹{mess_bill:.2f}. Please pay it using the online portal."
+        crud.create_notification(db, student.id, message)
         count += 1
         
     return {"message": f"Successfully notified {count} students."}

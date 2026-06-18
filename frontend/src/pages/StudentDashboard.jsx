@@ -8,6 +8,7 @@ export default function StudentDashboard() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [monthlyAttendance, setMonthlyAttendance] = useState({});
   const [fines, setFines] = useState([]);
+  const [monthlyBill, setMonthlyBill] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
@@ -87,10 +88,11 @@ export default function StudentDashboard() {
       const year = currentMonth.getFullYear();
       const month = currentMonth.getMonth() + 1;
       
-      const [attRes, finesRes, notifRes] = await Promise.all([
+      const [attRes, finesRes, notifRes, billRes] = await Promise.all([
         api.get(`/student/attendance/month/${year}/${month}`),
         api.get('/student/fines'),
-        api.get('/student/notifications')
+        api.get('/student/notifications'),
+        api.get(`/student/bill/month/${year}/${month}`)
       ]);
       
       const attMap = {};
@@ -101,6 +103,7 @@ export default function StudentDashboard() {
       setMonthlyAttendance(attMap);
       setFines(finesRes.data);
       setNotifications(notifRes.data);
+      setMonthlyBill(billRes.data);
       setSelectedEditDate(null);
     } catch (err) {
       if (err.response?.status === 401) {
@@ -372,18 +375,64 @@ export default function StudentDashboard() {
         <>
           {/* Monthly Summary Cards */}
           <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-        <div className="glass-card" style={{ padding: '1.5rem', flex: 1, minWidth: '150px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-          <h4 style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Mess Days</h4>
-          <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--success-color)' }}>
-            {monthStats.present} / {monthStats.total}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1, minWidth: '150px' }}>
+          <div className="glass-card" style={{ padding: '1.5rem', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <h4 style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Mess Days</h4>
+            <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--success-color)' }}>
+              {monthStats.present} / {monthStats.total}
+            </div>
+          </div>
+          <div className="glass-card" style={{ padding: '1.5rem', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <h4 style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Mess Cuts</h4>
+            <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: monthStats.cuts > 10 ? 'var(--danger-color)' : 'white' }}>
+              {monthStats.cuts}
+            </div>
           </div>
         </div>
-        <div className="glass-card" style={{ padding: '1.5rem', flex: 1, minWidth: '150px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-          <h4 style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Mess Cuts</h4>
-          <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: monthStats.cuts > 10 ? 'var(--danger-color)' : 'white' }}>
-            {monthStats.cuts}
+
+        {monthlyBill && (
+          <div className="glass-card" style={{ padding: '1.5rem', flex: 2, minWidth: '300px', display: 'flex', flexDirection: 'column' }}>
+            <h4 style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '1.1rem', textAlign: 'center' }}>Mess Bill Details</h4>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.8rem', fontSize: '0.95rem' }}>
+              <span style={{ color: 'var(--text-secondary)' }}>Days Present:</span>
+              <span style={{ fontWeight: 'bold' }}>{monthlyBill.days_present} days</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.8rem', fontSize: '0.95rem' }}>
+              <span style={{ color: 'var(--text-secondary)' }}>Per Day Amount:</span>
+              <span style={{ fontWeight: 'bold' }}>₹{monthlyBill.per_day_amount.toFixed(2)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.8rem', fontSize: '0.95rem' }}>
+              <span style={{ color: 'var(--text-secondary)' }}>Penalties/Fines:</span>
+              <span style={{ fontWeight: 'bold', color: 'var(--danger-color)' }}>₹{monthlyBill.penalties.toFixed(2)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', fontSize: '0.95rem' }}>
+              <span style={{ color: 'var(--text-secondary)' }}>Rent:</span>
+              <span style={{ fontWeight: 'bold' }}>₹310.00</span>
+            </div>
+            
+            <div style={{ height: '1px', background: 'var(--glass-border)', margin: '0.5rem 0 1rem 0' }}></div>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <span style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>Total Bill:</span>
+              <span style={{ fontSize: '1.8rem', fontWeight: 'bold', color: 'var(--success-color)' }}>
+                ₹{monthlyBill.total_bill.toFixed(2)}
+              </span>
+            </div>
+            
+            <div style={{ marginTop: 'auto' }}>
+              <a 
+                href="https://onlinesbi.sbi.bank.in/sbicollect/icollecthome.htm?saralID=-918004880"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-primary"
+                style={{ textAlign: 'center', textDecoration: 'none', display: 'block', width: '100%', padding: '0.75rem', fontWeight: 'bold', fontSize: '1.1rem' }}
+              >
+                Pay Mess Bill Online
+              </a>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {monthStats.cuts > 10 && (

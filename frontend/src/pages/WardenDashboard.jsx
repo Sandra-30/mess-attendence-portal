@@ -43,6 +43,7 @@ export default function WardenDashboard() {
   const [billingMatrix, setBillingMatrix] = useState(null);
   const [billingMonth, setBillingMonth] = useState(new Date().getMonth() + 1);
   const [billingYear, setBillingYear] = useState(new Date().getFullYear());
+  const [perDayAmount, setPerDayAmount] = useState(0);
   
   const [holidays, setHolidays] = useState([]);
   const [holidayStartDate, setHolidayStartDate] = useState('');
@@ -95,8 +96,51 @@ export default function WardenDashboard() {
         data.student_matrix.sort(sortRooms);
       }
       setBillingMatrix(data);
+      setPerDayAmount(data.per_day_amount || 0);
     } catch (err) {
       setMessage({ type: 'error', text: 'Failed to fetch billing matrix.' });
+    }
+  };
+
+  const [isSavingConfig, setIsSavingConfig] = useState(false);
+  const handleSavePerDayAmount = async () => {
+    setIsSavingConfig(true);
+    try {
+      await api.post('/warden/billing/config', {
+        month: parseInt(billingMonth, 10),
+        year: parseInt(billingYear, 10),
+        per_day_amount: parseFloat(perDayAmount)
+      });
+      setMessage({ type: 'success', text: 'Per day amount saved successfully.' });
+      fetchBillingMatrix();
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Failed to save per day amount.' });
+    } finally {
+      setIsSavingConfig(false);
+    }
+  };
+
+  const handleOverrideBill = async (studentId, currentAmount) => {
+    const newAmount = window.prompt("Enter manual override amount for this student's mess bill:", currentAmount);
+    if (newAmount === null) return;
+    
+    const parsedAmount = parseFloat(newAmount);
+    if (isNaN(parsedAmount)) {
+      alert("Invalid amount.");
+      return;
+    }
+    
+    try {
+      await api.post('/warden/billing/override', {
+        student_id: studentId,
+        month: parseInt(billingMonth, 10),
+        year: parseInt(billingYear, 10),
+        amount: parsedAmount
+      });
+      setMessage({ type: 'success', text: 'Bill override saved.' });
+      fetchBillingMatrix();
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Failed to override bill.' });
     }
   };
 
@@ -422,9 +466,13 @@ export default function WardenDashboard() {
               </div>
               
               {billingMatrix && (
-                <div style={{ background: 'var(--surface-color)', padding: '0.75rem 1.5rem', borderRadius: '12px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <div style={{ background: 'var(--surface-color)', padding: '0.75rem 1.5rem', borderRadius: '12px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
                   <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Total Students:</span>
                   <span style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{billingMatrix.student_matrix.length}</span>
+                  <div style={{ width: '1px', height: '24px', background: 'var(--border-color)', margin: '0 10px' }}></div>
+                  <label className="input-label" style={{ margin: 0 }}>Per Day Amount (₹):</label>
+                  <input type="number" step="0.01" className="glass-input" style={{ width: '100px', padding: '0.4rem' }} value={perDayAmount} onChange={e => setPerDayAmount(e.target.value)} />
+                  <button className="btn btn-primary" style={{ padding: '0.4rem 1rem' }} onClick={handleSavePerDayAmount} disabled={isSavingConfig}>{isSavingConfig ? 'Saving...' : 'Save'}</button>
                 </div>
               )}
             </div>
@@ -473,6 +521,8 @@ export default function WardenDashboard() {
                     <th style={{ padding: '1rem' }}>Room</th>
                     <th style={{ padding: '1rem' }}>Days Present</th>
                     <th style={{ padding: '1rem' }}>Total Fines (₹)</th>
+                    <th style={{ padding: '1rem' }}>Rent (₹)</th>
+                    <th style={{ padding: '1rem' }}>Mess Bill (₹)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -483,6 +533,14 @@ export default function WardenDashboard() {
                       <td style={{ padding: '1rem' }}>{student.room_number}</td>
                       <td style={{ padding: '1rem', fontWeight: 'bold' }}>{student.days_present}</td>
                       <td style={{ padding: '1rem', color: 'var(--danger-color)', fontWeight: 'bold' }}>{student.total_fines}</td>
+                      <td style={{ padding: '1rem' }}>310.00</td>
+                      <td style={{ padding: '1rem', fontWeight: 'bold' }}>
+                        <span style={{ display: 'inline-block', minWidth: '60px', color: student.is_manual_override ? 'var(--warning-color)' : 'inherit' }}>
+                          ₹{student.mess_bill ? student.mess_bill.toFixed(2) : '0.00'}
+                          {student.is_manual_override && <span style={{ fontSize: '0.7rem', display: 'block' }}>(Overridden)</span>}
+                        </span>
+                        <button onClick={() => handleOverrideBill(student.student_id, student.mess_bill)} className="btn" style={{ padding: '2px 8px', fontSize: '0.8rem', marginLeft: '10px' }}>Edit</button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

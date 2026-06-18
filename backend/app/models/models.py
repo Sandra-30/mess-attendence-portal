@@ -73,3 +73,22 @@ class Holiday(Base):
     id = Column(Integer, primary_key=True, index=True)
     date = Column(Date, unique=True, index=True)
     description = Column(String, nullable=True)
+
+class MonthlyConfig(Base):
+    __tablename__ = "monthly_config"
+
+    id = Column(Integer, primary_key=True, index=True)
+    month = Column(Integer, index=True)
+    year = Column(Integer, index=True)
+    per_day_amount = Column(Float, default=0.0)
+
+class MonthlyBill(Base):
+    __tablename__ = "monthly_bills"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("users.id"))
+    month = Column(Integer, index=True)
+    year = Column(Integer, index=True)
+    amount = Column(Float)
+
+    student = relationship("User")

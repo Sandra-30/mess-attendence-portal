@@ -114,3 +114,14 @@ class HolidayResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class MonthlyConfigCreate(BaseModel):
+    month: int
+    year: int
+    per_day_amount: float
+
+class MonthlyBillOverride(BaseModel):
+    student_id: int
+    month: int
+    year: int
+    amount: float
