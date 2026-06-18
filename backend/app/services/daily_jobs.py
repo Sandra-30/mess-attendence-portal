@@ -31,12 +31,23 @@ def evaluate_dynamic_rules():
             if t3_att and (t3_att.breakfast or t3_att.lunch or t3_att.dinner):
                 t3_att.is_locked = True
             else:
-                # Create in-app notification instead of email
+                # Create in-app notification
                 notif = models.Notification(
                     student_id=student.id, 
                     message=f"Reminder: You have not marked your attendance for {t_minus_3_date}. You will be billed by default."
                 )
                 db.add(notif)
+                
+                # Send email reminder
+                try:
+                    from app.core.email import send_email_background
+                    send_email_background(
+                        to_email=student.email,
+                        subject=f"Action Required: Mess Attendance for {t_minus_3_date}",
+                        body_text=f"Reminder: You have not marked your mess attendance for {t_minus_3_date}.\n\nPlease log in to the portal to mark your attendance, otherwise you will be billed by default."
+                    )
+                except Exception as e:
+                    logger.error(f"Failed to send T-3 reminder email to {student.email}: {e}")
             
             # ---------------- T-2 Logic ----------------
             # At T-2 Days:
