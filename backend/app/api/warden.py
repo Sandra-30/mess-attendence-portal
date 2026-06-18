@@ -285,7 +285,15 @@ def notify_bill_ready(
     # Set as published
     if config:
         config.is_published = True
-        db.commit()
+    else:
+        config = models.MonthlyConfig(
+            month=month,
+            year=year,
+            per_day_amount=0.0,
+            is_published=True
+        )
+        db.add(config)
+    db.commit()
 
     # Get overrides
     overrides = db.query(models.MonthlyBill).filter(
