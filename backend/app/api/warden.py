@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.db.database import get_db
@@ -257,6 +257,7 @@ def update_billing_override(
 def notify_bill_ready(
     month: int,
     year: int,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(deps.get_current_warden)
 ):
@@ -334,6 +335,10 @@ def notify_bill_ready(
             
         message = f"Your mess bill for {month_name} {year} is ₹{mess_bill:.2f}. Please pay it using the online portal."
         crud.create_notification(db, student.id, message)
+        
+        from app.core.email import send_email_background
+        background_tasks.add_task(send_email_background, student.email, f"Mess Bill Ready - {month_name} {year}", message)
+        
         count += 1
         
     return {"message": f"Successfully notified {count} students."}
@@ -341,6 +346,7 @@ def notify_bill_ready(
 @router.post("/announce")
 def broadcast_announcement(
     payload: schemas.AnnouncementCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(deps.get_current_warden)
 ):
@@ -355,6 +361,10 @@ def broadcast_announcement(
     for student in students:
         # Prefix with 'Announcement:' so it stands out
         crud.create_notification(db, student.id, f"📢 Announcement: {payload.message.strip()}")
+        
+        from app.core.email import send_email_background
+        background_tasks.add_task(send_email_background, student.email, "Warden Announcement", payload.message.strip())
+        
         count += 1
         
     return {"message": f"Successfully broadcasted announcement to {count} students."}
