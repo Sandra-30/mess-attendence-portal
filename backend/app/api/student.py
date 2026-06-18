@@ -247,3 +247,91 @@ def get_monthly_bill(
         "total_bill": mess_bill,
         "is_manual_override": is_manual_override
     }
+
+@router.get("/billing-matrix")
+def get_billing_matrix(
+    month: int,
+    year: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(deps.get_current_active_user)
+):
+    from sqlalchemy import func
+    import calendar
+    days_in_month = calendar.monthrange(year, month)[1]
+    
+    # Get holidays for this month
+    holidays = db.query(models.Holiday).filter(
+        func.extract('month', models.Holiday.date) == month,
+        func.extract('year', models.Holiday.date) == year
+    ).all()
+    holiday_dates = {h.date for h in holidays}
+    
+    # Get config
+    config = db.query(models.MonthlyConfig).filter(
+        models.MonthlyConfig.month == month,
+        models.MonthlyConfig.year == year
+    ).first()
+    per_day_amount = config.per_day_amount if config else 0.0
+
+    # Get overrides
+    overrides = db.query(models.MonthlyBill).filter(
+        models.MonthlyBill.month == month,
+        models.MonthlyBill.year == year
+    ).all()
+    override_dict = {o.student_id: o.amount for o in overrides}
+
+    # Get all students
+    students = db.query(models.User).filter(models.User.role == "STUDENT").all()
+    
+    matrix = []
+    total_hostel_days = 0
+    working_days = days_in_month - len(holiday_dates)
+    
+    for student in students:
+        student_attendances = db.query(models.Attendance).filter(
+            models.Attendance.student_id == student.id,
+            func.extract('month', models.Attendance.target_date) == month,
+            func.extract('year', models.Attendance.target_date) == year
+        ).all()
+        
+        # Calculate explicit cuts (excluding holidays)
+        cuts = 0
+        for a in student_attendances:
+            if not a.breakfast and not a.lunch and not a.dinner and a.target_date not in holiday_dates:
+                cuts += 1
+                
+        days_present = max(0, working_days - cuts)
+        total_hostel_days += days_present
+        
+        # Get fines
+        fines = db.query(models.Ledger).filter(
+            models.Ledger.student_id == student.id,
+            func.extract('month', models.Ledger.date) == month,
+            func.extract('year', models.Ledger.date) == year
+        ).all()
+        total_fines = sum(f.amount for f in fines)
+        
+        is_manual_override = student.id in override_dict
+        if is_manual_override:
+            mess_bill = override_dict[student.id]
+        else:
+            mess_bill = (days_present * per_day_amount) + total_fines + 310
+        
+        matrix.append({
+            "student_id": student.id,
+            "name": student.name,
+            "email": student.email,
+            "room_number": student.room_number,
+            "days_present": days_present,
+            "total_fines": total_fines,
+            "mess_bill": mess_bill,
+            "is_manual_override": is_manual_override
+        })
+        
+    return {
+        "month": month,
+        "year": year,
+        "total_hostel_days": total_hostel_days,
+        "per_day_amount": per_day_amount,
+        "student_matrix": matrix
+    }

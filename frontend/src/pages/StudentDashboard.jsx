@@ -30,6 +30,11 @@ export default function StudentDashboard() {
   const [rosterDate, setRosterDate] = useState(new Date().toISOString().split('T')[0]);
   const [rosterData, setRosterData] = useState([]);
   const [rosterLoading, setRosterLoading] = useState(false);
+
+  const [billingMatrix, setBillingMatrix] = useState(null);
+  const [billingMonth, setBillingMonth] = useState(new Date().getMonth() + 1);
+  const [billingYear, setBillingYear] = useState(new Date().getFullYear());
+  const [billingLoading, setBillingLoading] = useState(false);
   
   const navigate = useNavigate();
 
@@ -57,8 +62,30 @@ export default function StudentDashboard() {
   useEffect(() => {
     if (activeTab === 'attendance') {
       fetchRosterData();
+    } else if (activeTab === 'billing') {
+      fetchBillingMatrix();
     }
-  }, [activeTab, rosterDate]);
+  }, [activeTab, rosterDate, billingMonth, billingYear]);
+
+  const fetchBillingMatrix = async () => {
+    setBillingLoading(true);
+    try {
+      const res = await api.get(`/student/billing-matrix?month=${billingMonth}&year=${billingYear}`);
+      const data = res.data;
+      if (data && data.student_matrix) {
+        data.student_matrix.sort((a, b) => {
+          const roomA = String(a.room_number || '');
+          const roomB = String(b.room_number || '');
+          return roomA.localeCompare(roomB, undefined, { numeric: true, sensitivity: 'base' });
+        });
+      }
+      setBillingMatrix(data);
+    } catch (err) {
+      setError('Failed to fetch billing matrix.');
+    } finally {
+      setBillingLoading(false);
+    }
+  };
 
   const fetchRosterData = async () => {
     setRosterLoading(true);
@@ -356,7 +383,7 @@ export default function StudentDashboard() {
       </header>
 
       <div className="tabs-container" style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
-        {['dashboard', 'attendance'].map(tab => (
+        {['dashboard', 'attendance', 'billing'].map(tab => (
           <button
             key={tab}
             className="btn"
@@ -366,7 +393,7 @@ export default function StudentDashboard() {
             }}
             onClick={() => { setActiveTab(tab); setError(''); }}
           >
-            {tab === 'dashboard' ? 'My Dashboard' : 'Daily Attendance'}
+            {tab === 'dashboard' ? 'My Dashboard' : tab === 'attendance' ? 'Daily Attendance' : 'Monthly Bills'}
           </button>
         ))}
       </div>
@@ -666,6 +693,76 @@ export default function StudentDashboard() {
             </div>
           ) : (
             <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>No data available for this date.</p>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'billing' && (
+        <div className="glass-panel" style={{ padding: '2rem' }}>
+          <h3>Monthly Bills Transparency</h3>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>View the final mess bill calculation for all residents in the hostel.</p>
+          
+          <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+            <div className="input-group" style={{ marginBottom: 0 }}>
+              <label className="input-label">Month</label>
+              <select className="glass-input" value={billingMonth} onChange={e => setBillingMonth(parseInt(e.target.value))}>
+                {Array.from({ length: 12 }, (_, i) => (
+                  <option key={i + 1} value={i + 1}>{new Date(2000, i).toLocaleString('default', { month: 'long' })}</option>
+                ))}
+              </select>
+            </div>
+            <div className="input-group" style={{ marginBottom: 0 }}>
+              <label className="input-label">Year</label>
+              <input type="number" className="glass-input" value={billingYear} onChange={e => setBillingYear(parseInt(e.target.value))} />
+            </div>
+            
+            {billingMatrix && (
+              <div style={{ background: 'var(--surface-color)', padding: '0.75rem 1.5rem', borderRadius: '12px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', marginLeft: 'auto' }}>
+                <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Total Students:</span>
+                <span style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{billingMatrix.student_matrix.length}</span>
+                <div style={{ width: '1px', height: '24px', background: 'var(--border-color)', margin: '0 10px' }}></div>
+                <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Per Day Amount:</span>
+                <span style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>₹{billingMatrix.per_day_amount.toFixed(2)}</span>
+              </div>
+            )}
+          </div>
+
+          {billingLoading ? (
+            <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>Loading billing data...</p>
+          ) : billingMatrix && billingMatrix.student_matrix.length > 0 ? (
+            <div style={{ overflowX: 'auto', background: 'rgba(0,0,0,0.2)', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid var(--border-color)', textAlign: 'left', background: 'rgba(255,255,255,0.05)' }}>
+                    <th style={{ padding: '1rem' }}>Name</th>
+                    <th style={{ padding: '1rem' }}>Room</th>
+                    <th style={{ padding: '1rem' }}>Days Present</th>
+                    <th style={{ padding: '1rem' }}>Total Fines (₹)</th>
+                    <th style={{ padding: '1rem' }}>Rent (₹)</th>
+                    <th style={{ padding: '1rem' }}>Mess Bill (₹)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {billingMatrix.student_matrix.map(student => (
+                    <tr key={student.student_id} style={{ borderBottom: '1px solid var(--glass-border)' }}>
+                      <td style={{ padding: '1rem' }}>{student.name}</td>
+                      <td style={{ padding: '1rem' }}>{student.room_number}</td>
+                      <td style={{ padding: '1rem', fontWeight: 'bold' }}>{student.days_present}</td>
+                      <td style={{ padding: '1rem', color: 'var(--danger-color)', fontWeight: 'bold' }}>{student.total_fines}</td>
+                      <td style={{ padding: '1rem' }}>310.00</td>
+                      <td style={{ padding: '1rem', fontWeight: 'bold' }}>
+                        <span style={{ display: 'inline-block', color: student.is_manual_override ? 'var(--warning-color)' : 'inherit' }}>
+                          ₹{student.mess_bill ? student.mess_bill.toFixed(2) : '0.00'}
+                          {student.is_manual_override && <span style={{ fontSize: '0.7rem', display: 'block' }}>(Overridden)</span>}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>No billing data found for this month.</p>
           )}
         </div>
       )}
