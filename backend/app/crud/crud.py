@@ -15,6 +15,8 @@ def create_user(db: Session, user: schemas.UserCreate, is_active: bool = False):
         email=user.email,
         name=user.name,
         room_number=user.room_number,
+        admission_year=user.admission_year,
+        year_of_study=user.year_of_study,
         hashed_password=hashed_password,
         role=user.role,
         is_active=is_active
@@ -28,7 +30,9 @@ def add_whitelist(db: Session, whitelist: schemas.WhitelistCreate):
     db_whitelist = models.Whitelist(
         email=whitelist.email,
         name=whitelist.name,
-        room_number=whitelist.room_number
+        room_number=whitelist.room_number,
+        admission_year=whitelist.admission_year,
+        year_of_study=whitelist.year_of_study
     )
     db.add(db_whitelist)
     db.commit()

@@ -11,6 +11,8 @@ class User(Base):
     hashed_password = Column(String)
     name = Column(String)
     room_number = Column(String)
+    admission_year = Column(String, nullable=True)
+    year_of_study = Column(Integer, nullable=True)
     role = Column(String, default="STUDENT") # WARDEN or STUDENT
     is_active = Column(Boolean, default=False)
     
@@ -25,6 +27,8 @@ class Whitelist(Base):
     email = Column(String, unique=True, index=True)
     name = Column(String)
     room_number = Column(String)
+    admission_year = Column(String, nullable=True)
+    year_of_study = Column(Integer, nullable=True)
 
 class Attendance(Base):
     __tablename__ = "attendance"

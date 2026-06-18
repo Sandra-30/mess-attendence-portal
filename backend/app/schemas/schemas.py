@@ -6,6 +6,8 @@ class UserBase(BaseModel):
     email: EmailStr
     name: str
     room_number: Optional[str] = None
+    admission_year: Optional[str] = None
+    year_of_study: Optional[int] = None
 
 class UserCreate(UserBase):
     password: str
@@ -23,12 +25,18 @@ class UserResponse(UserBase):
     class Config:
         from_attributes = True
 
-class WhitelistCreate(BaseModel):
+class WhitelistBase(BaseModel):
     email: EmailStr
     name: str
     room_number: str
+    admission_year: Optional[str] = None
+    year_of_study: Optional[int] = None
 
-class WhitelistResponse(WhitelistCreate):
+class WhitelistCreate(WhitelistBase):
+    admission_year: str
+    year_of_study: int
+
+class WhitelistResponse(WhitelistBase):
     id: int
 
     class Config:

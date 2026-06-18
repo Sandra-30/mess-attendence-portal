@@ -31,8 +31,11 @@ const sortRooms = (a, b) => {
 
 export default function WardenDashboard() {
   const [activeTab, setActiveTab] = useState('whitelist');
-  const [whitelistForm, setWhitelistForm] = useState({ name: '', email: '', room_number: '' });
+  const [whitelistForm, setWhitelistForm] = useState({ name: '', email: '', room_number: '', admission_year: '', year_of_study: 1 });
   const [whitelistEntries, setWhitelistEntries] = useState([]);
+  
+  const [filterAdmissionYear, setFilterAdmissionYear] = useState('');
+  const [filterYearOfStudy, setFilterYearOfStudy] = useState('');
 
   const [headcountDate, setHeadcountDate] = useState(new Date().toISOString().split('T')[0]);
   const [headcounts, setHeadcounts] = useState(null);
@@ -58,7 +61,7 @@ export default function WardenDashboard() {
     try {
       await api.post('/warden/whitelist', whitelistForm);
       setMessage({ type: 'success', text: 'Student added to list successfully.' });
-      setWhitelistForm({ name: '', email: '', room_number: '' });
+      setWhitelistForm({ ...whitelistForm, name: '', email: '', room_number: '' }); // retain admission_year and year_of_study
       fetchWhitelist();
     } catch (err) {
       setMessage({ type: 'error', text: err.response?.data?.detail || 'Failed to add student.' });
@@ -292,10 +295,42 @@ export default function WardenDashboard() {
                 <label className="input-label">Room Number</label>
                 <input type="text" className="glass-input" value={whitelistForm.room_number} onChange={e => setWhitelistForm({ ...whitelistForm, room_number: e.target.value })} required />
               </div>
+              <div className="input-group">
+                <label className="input-label">Admission Year</label>
+                <input type="text" className="glass-input" value={whitelistForm.admission_year} onChange={e => setWhitelistForm({ ...whitelistForm, admission_year: e.target.value })} placeholder="e.g. 2025-26" required />
+              </div>
+              <div className="input-group">
+                <label className="input-label">Year of Study</label>
+                <select className="glass-input" value={whitelistForm.year_of_study} onChange={e => setWhitelistForm({ ...whitelistForm, year_of_study: parseInt(e.target.value, 10) })} required>
+                  <option value={1}>1st Year</option>
+                  <option value={2}>2nd Year</option>
+                  <option value={3}>3rd Year</option>
+                  <option value={4}>4th Year</option>
+                </select>
+              </div>
               <button type="submit" className="btn btn-primary"> Add </button>
             </form>
 
-            <h4 style={{ marginTop: '3rem', marginBottom: '1rem', color: 'var(--text-secondary)' }}>Current Inmates</h4>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '3rem', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
+              <h4 style={{ color: 'var(--text-secondary)', margin: 0 }}>Current Inmates</h4>
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <div className="input-group" style={{ margin: 0 }}>
+                  <label className="input-label">Filter by Admission Year</label>
+                  <input type="text" className="glass-input" style={{ width: '150px' }} placeholder="All" value={filterAdmissionYear} onChange={e => setFilterAdmissionYear(e.target.value)} />
+                </div>
+                <div className="input-group" style={{ margin: 0 }}>
+                  <label className="input-label">Filter by Year of Study</label>
+                  <select className="glass-input" value={filterYearOfStudy} onChange={e => setFilterYearOfStudy(e.target.value)}>
+                    <option value="">All</option>
+                    <option value="1">1st Year</option>
+                    <option value="2">2nd Year</option>
+                    <option value="3">3rd Year</option>
+                    <option value="4">4th Year</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
@@ -303,15 +338,22 @@ export default function WardenDashboard() {
                     <th style={{ padding: '1rem' }}>Name</th>
                     <th style={{ padding: '1rem' }}>Email</th>
                     <th style={{ padding: '1rem' }}>Room</th>
+                    <th style={{ padding: '1rem' }}>Admission Year</th>
+                    <th style={{ padding: '1rem' }}>Year of Study</th>
                     <th style={{ padding: '1rem' }}>Reset Password</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {whitelistEntries.map(entry => (
+                  {whitelistEntries
+                    .filter(entry => (filterAdmissionYear ? (entry.admission_year || '').includes(filterAdmissionYear) : true))
+                    .filter(entry => (filterYearOfStudy ? String(entry.year_of_study) === String(filterYearOfStudy) : true))
+                    .map(entry => (
                     <tr key={entry.id} style={{ borderBottom: '1px solid var(--glass-border)' }}>
                       <td style={{ padding: '1rem' }}>{entry.name}</td>
                       <td style={{ padding: '1rem', color: 'var(--text-secondary)' }}>{entry.email}</td>
                       <td style={{ padding: '1rem' }}>{entry.room_number}</td>
+                      <td style={{ padding: '1rem' }}>{entry.admission_year || 'N/A'}</td>
+                      <td style={{ padding: '1rem' }}>{entry.year_of_study || 'N/A'}</td>
                       <td style={{ padding: '1rem' }}>
                         <button
                           onClick={() => handleResetPassword(entry.email)}
@@ -326,7 +368,7 @@ export default function WardenDashboard() {
                   ))}
                   {whitelistEntries.length === 0 && (
                     <tr>
-                      <td colSpan="4" style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>No students in list yet.</td>
+                      <td colSpan="6" style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>No students in list yet.</td>
                     </tr>
                   )}
                 </tbody>
