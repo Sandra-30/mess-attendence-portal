@@ -1,15 +1,18 @@
-name: Keep Supabase Awake
+name: Keep Supabase & Backend Awake
 
 on:
   schedule:
-    # Runs every 2 days at midnight UTC
-    - cron: '0 0 */2 * *'
+    # Runs every 10 minutes to keep the Render backend awake
+    - cron: '*/10 * * * *'
   workflow_dispatch: # Allows you to run this manually from the Actions tab
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
+      - name: Ping Render Backend
+        run: curl -sS "https://mess-backend-eto3.onrender.com" > /dev/null
+        
       - name: Ping Supabase API
         run: |
           curl -sS --fail -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
