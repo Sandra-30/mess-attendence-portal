@@ -130,3 +130,19 @@ def generate_monthly_summary():
         db.rollback()
     finally:
         db.close()
+
+def ping_database():
+    """
+    A simple ping function to keep the database alive if it's running on a free tier 
+    like Supabase that snoozes after 7 days of inactivity.
+    """
+    logger.info("Pinging database to keep it awake...")
+    db: Session = SessionLocal()
+    try:
+        from sqlalchemy import text
+        db.execute(text("SELECT 1"))
+        logger.info("Database ping successful.")
+    except Exception as e:
+        logger.error(f"Error pinging database: {e}")
+    finally:
+        db.close()
