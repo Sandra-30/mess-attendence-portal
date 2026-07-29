@@ -411,7 +411,7 @@ export default function StudentDashboard() {
           </div>
           <div className="glass-card" style={{ padding: '1.5rem', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
             <h4 style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Mess Cuts</h4>
-            <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: monthStats.cuts > 10 ? 'var(--danger-color)' : 'white' }}>
+            <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'white' }}>
               {monthStats.cuts}
             </div>
           </div>
@@ -462,28 +462,7 @@ export default function StudentDashboard() {
         )}
       </div>
 
-      {monthStats.cuts > 10 && (
-        <div className="glass-panel" style={{ 
-          padding: '1.5rem', marginBottom: '2rem', border: '1px solid var(--danger-color)', 
-          background: 'rgba(255, 59, 48, 0.1)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' 
-        }}>
-          <AlertCircle size={32} color="var(--danger-color)" style={{ marginBottom: '1rem' }} />
-          <h3 style={{ color: 'white', marginBottom: '0.5rem' }}>Maximum Mess Cuts Exceeded</h3>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', maxWidth: '600px' }}>
-            You have exceeded the maximum limit of 10 mess cuts for this month ({monthStats.cuts} cuts taken). 
-            To avail the financial discount for these extra cuts, you must submit an official request with valid documents to the Warden.
-          </p>
-          <a 
-            href={`https://mail.google.com/mail/?view=cm&fs=1&to=wardenlh@gecskp.ac.in&su=Mess Cut Exception Request - ${studentName} - Room ${studentRoom}&body=Dear Warden,%0D%0A%0D%0AI am requesting an exception for exceeding the 10 mess cut limit for the month of ${currentMonth.toLocaleString('default', { month: 'long' })} ${currentMonth.getFullYear()}. Attached are my supporting documents.%0D%0A%0D%0AThank you,%0D%0A${studentName}&authuser=${studentEmail}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn btn-primary"
-            style={{ textDecoration: 'none', background: 'var(--danger-color)' }}
-          >
-            Email Request to Warden
-          </a>
-        </div>
-      )}
+
 
       {showPasswordTab && (
         <div className="glass-panel" style={{ padding: '2rem', marginBottom: '2rem', animation: 'fadeIn 0.3s ease' }}>
@@ -645,7 +624,7 @@ export default function StudentDashboard() {
 
       {activeTab === 'attendance' && (
         <div className="glass-panel" style={{ padding: '2rem' }}>
-          <h3>Daily Attendance Roster</h3>
+          <h3>Daily Attendance</h3>
           <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>Select a date to view who is eating in the mess. This maintains complete transparency for all residents.</p>
           
           <div className="input-group" style={{ maxWidth: '300px', marginBottom: '2rem' }}>
@@ -659,7 +638,7 @@ export default function StudentDashboard() {
           </div>
 
           {rosterLoading ? (
-            <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>Loading roster...</p>
+            <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>Loading list...</p>
           ) : rosterData.length > 0 ? (
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -753,7 +732,6 @@ export default function StudentDashboard() {
                       <td style={{ padding: '1rem', fontWeight: 'bold' }}>
                         <span style={{ display: 'inline-block', color: student.is_manual_override ? 'var(--warning-color)' : 'inherit' }}>
                           ₹{student.mess_bill ? student.mess_bill.toFixed(2) : '0.00'}
-                          {student.is_manual_override && <span style={{ fontSize: '0.7rem', display: 'block' }}>(Overridden)</span>}
                         </span>
                       </td>
                     </tr>

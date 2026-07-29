@@ -120,30 +120,7 @@ export default function WardenDashboard() {
     }
   };
 
-  const [editingBillId, setEditingBillId] = useState(null);
-  const [editBillAmount, setEditBillAmount] = useState("");
 
-  const handleOverrideBill = async (studentId) => {
-    const parsedAmount = parseFloat(editBillAmount);
-    if (isNaN(parsedAmount)) {
-      alert("Invalid amount.");
-      return;
-    }
-    
-    try {
-      await api.post('/warden/billing/override', {
-        student_id: studentId,
-        month: parseInt(billingMonth, 10),
-        year: parseInt(billingYear, 10),
-        amount: parsedAmount
-      });
-      setMessage({ type: 'success', text: 'Bill override saved.' });
-      setEditingBillId(null);
-      fetchBillingMatrix();
-    } catch (err) {
-      setMessage({ type: 'error', text: 'Failed to override bill.' });
-    }
-  };
 
   const fetchWhitelist = async () => {
     try {
@@ -552,29 +529,9 @@ export default function WardenDashboard() {
                       <td style={{ padding: '1rem', color: 'var(--danger-color)', fontWeight: 'bold' }}>{student.total_fines}</td>
                       <td style={{ padding: '1rem' }}>310.00</td>
                       <td style={{ padding: '1rem', fontWeight: 'bold' }}>
-                        {editingBillId === student.student_id ? (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                            <input 
-                              type="number" 
-                              step="0.01" 
-                              className="glass-input" 
-                              style={{ width: '80px', padding: '2px 5px' }} 
-                              value={editBillAmount} 
-                              onChange={(e) => setEditBillAmount(e.target.value)} 
-                              autoFocus
-                            />
-                            <button onClick={() => handleOverrideBill(student.student_id)} className="btn btn-primary" style={{ padding: '2px 8px', fontSize: '0.8rem' }}>Save</button>
-                            <button onClick={() => setEditingBillId(null)} className="btn" style={{ padding: '2px 8px', fontSize: '0.8rem' }}>Cancel</button>
-                          </div>
-                        ) : (
-                          <>
-                            <span style={{ display: 'inline-block', minWidth: '60px', color: student.is_manual_override ? 'var(--warning-color)' : 'inherit' }}>
-                              ₹{student.mess_bill ? student.mess_bill.toFixed(2) : '0.00'}
-                              {student.is_manual_override && <span style={{ fontSize: '0.7rem', display: 'block' }}>(Overridden)</span>}
-                            </span>
-                            <button onClick={() => { setEditingBillId(student.student_id); setEditBillAmount(student.mess_bill ? student.mess_bill.toFixed(2) : ''); }} className="btn" style={{ padding: '2px 8px', fontSize: '0.8rem', marginLeft: '10px' }}>Edit</button>
-                          </>
-                        )}
+                        <span style={{ display: 'inline-block', minWidth: '60px' }}>
+                          ₹{student.mess_bill ? student.mess_bill.toFixed(2) : '0.00'}
+                        </span>
                       </td>
                     </tr>
                   ))}
