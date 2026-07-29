@@ -333,8 +333,8 @@ def notify_bill_ready(
         else:
             mess_bill = (days_present * per_day_amount) + total_fines + 310
             
-        message = f"Your mess bill for {month_name} {year} is ₹{mess_bill:.2f}. Please pay it using the online portal."
-        crud.create_notification(db, student.id, message)
+        message = f'Your mess bill for {month_name} {year} is ₹{mess_bill:.2f}.<br><br>Please pay it using the online portal: <a href="https://onlinesbi.sbi.bank.in/sbicollect/icollecthome.htm?saralID=-918004880" style="color: #3498db; text-decoration: none; font-weight: bold;">Click Here to Pay Online</a>'
+        crud.create_notification(db, student.id, message.replace('<br>', ' '))
         
         from app.core.email import send_email_background
         background_tasks.add_task(send_email_background, student.email, f"Mess Bill Ready - {month_name} {year}", message)
