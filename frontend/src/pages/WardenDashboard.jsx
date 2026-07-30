@@ -242,8 +242,18 @@ export default function WardenDashboard() {
 
       {message.text && (
         <div style={{
+          position: 'fixed',
+          top: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 9999,
           backgroundColor: message.type === 'success' ? 'var(--success-color)' : 'var(--danger-color)',
-          padding: '1rem', borderRadius: '8px', marginBottom: '2rem', color: 'white', display: 'flex', alignItems: 'center'
+          padding: '1rem 2rem', 
+          borderRadius: '8px', 
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          color: 'white', 
+          display: 'flex', 
+          alignItems: 'center'
         }}>
           {message.type === 'success' ? <CheckCircle style={{ marginRight: '10px' }} /> : <AlertCircle style={{ marginRight: '10px' }} />}
           {message.text}
@@ -323,7 +333,7 @@ export default function WardenDashboard() {
             <form onSubmit={handleWhitelistSubmit} style={{ maxWidth: '500px' }}>
               <div className="input-group">
                 <label className="input-label">Student Name</label>
-                <input type="text" className="glass-input" value={whitelistForm.name} onChange={e => setWhitelistForm({ ...whitelistForm, name: e.target.value })} required />
+                <input type="text" className="glass-input" value={whitelistForm.name} onChange={e => setWhitelistForm({ ...whitelistForm, name: e.target.value.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') })} required />
               </div>
               <div className="input-group">
                 <label className="input-label">Student Email</label>
