@@ -33,6 +33,7 @@ export default function WardenDashboard() {
   const [activeTab, setActiveTab] = useState('whitelist');
   const [whitelistForm, setWhitelistForm] = useState({ name: '', email: '', room_number: '', admission_year: '', year_of_study: 1 });
   const [whitelistEntries, setWhitelistEntries] = useState([]);
+  const [isAddingWhitelist, setIsAddingWhitelist] = useState(false);
   
   const [filterAdmissionYear, setFilterAdmissionYear] = useState('');
   const [filterYearOfStudy, setFilterYearOfStudy] = useState('');
@@ -59,6 +60,7 @@ export default function WardenDashboard() {
 
   const handleWhitelistSubmit = async (e) => {
     e.preventDefault();
+    setIsAddingWhitelist(true);
     try {
       await api.post('/warden/whitelist', whitelistForm);
       setMessage({ type: 'success', text: 'Student added to list successfully.' });
@@ -66,6 +68,8 @@ export default function WardenDashboard() {
       fetchWhitelist();
     } catch (err) {
       setMessage({ type: 'error', text: err.response?.data?.detail || 'Failed to add student.' });
+    } finally {
+      setIsAddingWhitelist(false);
     }
   };
 
@@ -356,7 +360,7 @@ export default function WardenDashboard() {
                   <option value={4}>4th Year</option>
                 </select>
               </div>
-              <button type="submit" className="btn btn-primary"> Add </button>
+              <button type="submit" className="btn btn-primary" disabled={isAddingWhitelist}> {isAddingWhitelist ? 'Adding...' : 'Add'} </button>
             </form>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '3rem', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
