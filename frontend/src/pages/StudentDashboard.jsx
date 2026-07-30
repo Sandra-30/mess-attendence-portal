@@ -507,7 +507,20 @@ export default function StudentDashboard() {
       )}
       
       {error && (
-        <div style={{ backgroundColor: 'var(--danger-color)', padding: '1rem', borderRadius: '8px', marginBottom: '2rem', color: 'white', display: 'flex', alignItems: 'center' }}>
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 9999,
+          backgroundColor: 'var(--danger-color)',
+          padding: '1rem 2rem', 
+          borderRadius: '8px', 
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          color: 'white', 
+          display: 'flex', 
+          alignItems: 'center'
+        }}>
           <AlertCircle style={{ marginRight: '10px' }} /> {error}
         </div>
       )}
